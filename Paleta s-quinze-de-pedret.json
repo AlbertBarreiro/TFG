@@ -1,0 +1,102 @@
+{
+  "Name": "scripps",
+  "Description": "These color codes are the ones typically used by the Scripps Institution of Oceanography (UCSD)",
+  "Labels": [
+    {
+      "id": "Empty",
+      "name": "Empty",
+      "description": null,
+      "fill": [
+        127,
+        127,
+        127
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "Blanc",
+      "name": "Blanc",
+      "description": null,
+      "fill": [
+        233,
+        233,
+        233
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "Vermell",
+      "name": "Vermell",
+      "description": null,
+      "fill": [
+        255,
+        58,
+        92
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "Taronja",
+      "name": "Taronja",
+      "description": null,
+      "fill": [
+        255,
+        162,
+        89
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "Granate",
+      "name": "Granate",
+      "description": null,
+      "fill": [
+        173,
+        114,
+        118
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "Gris Fosc",
+      "name": "Gris Fosc",
+      "description": null,
+      "fill": [
+        132,
+        133,
+        138
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    }
+  ]
+}

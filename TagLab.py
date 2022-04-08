@@ -30,6 +30,10 @@ import math
 import numpy as np
 import urllib
 import platform
+import cv2 as cv
+from skimage.feature import peak_local_max
+from skimage import data, img_as_float
+
 
 from PyQt5.QtCore import Qt, QSize, QMargins, QDir, QPoint, QPointF, QRectF, QTimer, pyqtSlot, pyqtSignal, QSettings, QFileInfo, QModelIndex
 from PyQt5.QtGui import QFontDatabase, QFont, QPixmap, QIcon, QKeySequence, QPen, QImageReader, QImage
@@ -907,7 +911,6 @@ class TagLab(QMainWindow):
         setWorkingAreaAct.triggered.connect(self.selectWorkingArea)
 
         ### IMPORT
-
         appendAct = QAction("Add Another Project", self)
         appendAct.setStatusTip("Add to the current project the annotated images of another project")
         appendAct.triggered.connect(self.importAnnotations)
@@ -1206,7 +1209,7 @@ class TagLab(QMainWindow):
         index = max(self.comboboxSourceImage.currentIndex()-1, 0)
 
         self.disableSplitScreen()
-        
+
         if self.viewerplus.image == img:
             self.showImage(self.project.images[index])
 
@@ -1219,7 +1222,7 @@ class TagLab(QMainWindow):
                              QMessageBox.Yes | QMessageBox.No)
         if reply != QMessageBox.Yes:
             return
-            
+
         if self.viewerplus.image == img:
             self.viewerplus.undrawLayer(layer)
 
@@ -1842,7 +1845,7 @@ class TagLab(QMainWindow):
 
         if self.activeviewer is None:
             return
-        
+
         selected = self.activeviewer.selected_blobs
 
         rows = []
@@ -3212,7 +3215,7 @@ class TagLab(QMainWindow):
 
         flag_pixel_size_changed = False
 
-        
+
 
         try:
             image = self.image2update
@@ -3323,7 +3326,7 @@ class TagLab(QMainWindow):
         if self.activeviewer is not None:
             if self.activeviewer.image is not None:
                 self.data_panel.setTable(self.project, self.activeviewer.image)
-    
+
     @pyqtSlot(Layer, bool)
     def toggleLayer(self, layer, enable):
         if enable:
@@ -3601,13 +3604,21 @@ class TagLab(QMainWindow):
         if not filename:
             return
 
+        self.setupProgressBar()
+
+        self.progress_bar.hidePerc()
+        self.progress_bar.setMessage("Importing label image")
+        QApplication.processEvents()
+
+
         QApplication.setOverrideCursor(Qt.WaitCursor)
         created_blobs = self.activeviewer.annotations.import_label_map(filename, self.project.labels, offset=[0,0],
-                                                                       scale=[1.0, 1.0])
+                                                                       scale=[1.0, 1.0], progress=self.progress_bar)
         for blob in created_blobs:
             self.activeviewer.addBlob(blob, selected=False)
         self.activeviewer.saveUndo()
 
+        self.deleteProgressBar()
         QApplication.restoreOverrideCursor()
 
     @pyqtSlot()
@@ -3982,6 +3993,9 @@ class TagLab(QMainWindow):
         images_dir_val = os.path.join(val_folder, "images")
         labels_dir_val = os.path.join(val_folder, "labels")
 
+        print("self.project.labels",self.project.labels)
+        print("target_classes1",target_classes)
+
         dataset_train_info, train_loss_values, val_loss_values = training.trainingNetwork(images_dir_train, labels_dir_train,
                                                                                           images_dir_val, labels_dir_val,
                                                                                           self.project.labels, target_classes, num_classes,
@@ -3993,11 +4007,9 @@ class TagLab(QMainWindow):
                                                                                           progress=self.progress_bar)
 
         ##### TEST
-
         test_folder = os.path.join(dataset_folder, "test")
         images_dir_test = os.path.join(test_folder, "images")
         labels_dir_test = os.path.join(test_folder, "labels")
-
         output_folder = os.path.join(dataset_folder, "predictions")
         if os.path.exists(output_folder):
             shutil.rmtree(output_folder, ignore_errors=True)
@@ -4007,12 +4019,10 @@ class TagLab(QMainWindow):
         self.progress_bar.hidePerc()
         self.progress_bar.setMessage("Test network..")
         QApplication.processEvents()
-
         metrics = training.testNetwork(images_dir_test, labels_dir_test, labels_dictionary=self.project.labels,
                                        target_classes=target_classes, dataset_train=dataset_train_info,
                                        network_filename=network_filename, output_folder=output_folder,
                                        progress=self.progress_bar)
-
         # info about the classifier created
         self.classifier_name = classifier_name
         self.network_name = network_name
@@ -4043,7 +4053,7 @@ class TagLab(QMainWindow):
         new_classifier["Classes"] = self.dataset_train_info.dict_target
 
         # scale
-        target_pixel_size_file = os.path.join(self.trainResultsWidget.dataset_folder, "target-scale-factor.txt")
+        target_pixel_size_file = os.path.join(self.trainResultsWidget.dataset_folder, "target-pixel-size.txt")
         fl = open(target_pixel_size_file, "r")
         line = fl.readline()
         fl.close()
@@ -4517,8 +4527,8 @@ if __name__ == '__main__':
 
     app.setStyleSheet("QToolTip {color: white; background-color: rgb(49,51,53); border: none; }")
 
-    app.setStyleSheet("QMainWindow::separator { width:5px; height:5px; color: red; }" + 
-        "QMainWindow::separator:hover { background: #888; }" + 
+    app.setStyleSheet("QMainWindow::separator { width:5px; height:5px; color: red; }" +
+        "QMainWindow::separator:hover { background: #888; }" +
         "QDockWidget::close-button, QDockWidget::float-button { background:#fff; }")
 
     # set the application font

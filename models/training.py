@@ -13,6 +13,7 @@ from models.coral_dataset import CoralsDataset
 import models.losses as losses
 from PyQt5.QtWidgets import QApplication
 
+import cv2
 # SEED
 torch.manual_seed(997)
 np.random.seed(997)
@@ -84,10 +85,10 @@ def evaluateNetwork(dataset, dataloader, loss_to_use, CEloss, w_for_GDL, tversky
                     focal_tversky_gamma, epoch, epochs_switch, epochs_transition, nclasses, net,
                     progress, flag_compute_mIoU=False, flag_test=False, savefolder=""):
     """
-    It evaluates the network on the validation set.  
+    It evaluates the network on the validation set.
     :param dataloader: Pytorch DataLoader to load the dataset for the evaluation.
     :param net: Network to evaluate.
-    :param savefolder: if a folder is given the classification results are saved into this folder. 
+    :param savefolder: if a folder is given the classification results are saved into this folder.
     :return: all the computed metrics.
     """""
 
@@ -96,9 +97,12 @@ def evaluateNetwork(dataset, dataloader, loss_to_use, CEloss, w_for_GDL, tversky
     USE_CUDA = torch.cuda.is_available()
 
     if USE_CUDA:
-        device = torch.device("cuda")
+        #device = torch.device("cuda")
+        device = torch.device("cpu") # CAG
         net.to(device)
         torch.cuda.synchronize()
+
+
 
     ##### EVALUATION #####
 
@@ -120,7 +124,6 @@ def evaluateNetwork(dataset, dataloader, loss_to_use, CEloss, w_for_GDL, tversky
 
             batch_images, labels_batch, names = data['image'], data['labels'], data['name']
             print(names)
-
             if USE_CUDA:
                 batch_images = batch_images.to(device)
                 labels_batch = labels_batch.to(device)
@@ -254,14 +257,14 @@ def trainingNetwork(images_folder_train, labels_folder_train, images_folder_val,
                     flag_shuffle, flag_training_accuracy, progress):
 
     ##### DATA #####
-
+    print("target_classes", target_classes)
     # setup the training dataset
     datasetTrain = CoralsDataset(images_folder_train, labels_folder_train, labels_dictionary, target_classes)
 
     print("Dataset setup..", end='')
     datasetTrain.computeAverage()
     datasetTrain.computeWeights()
-    print(datasetTrain.dict_target)
+    print("print(datasetTrain.dict_target)",datasetTrain.dict_target)
     print(datasetTrain.weights)
     freq = 1.0 / datasetTrain.weights
     print(freq)
@@ -274,7 +277,7 @@ def trainingNetwork(images_folder_train, labels_folder_train, images_folder_val,
     datasetVal = CoralsDataset(images_folder_val, labels_folder_val, labels_dictionary, target_classes)
     datasetVal.dataset_average = datasetTrain.dataset_average
     datasetVal.weights = datasetTrain.weights
-
+    print("datasetVal.dict_target", datasetVal.dict_target)
     #AUGUMENTATION IS NOT APPLIED ON THE VALIDATION SET
     datasetVal.disableAugumentation()
 
@@ -293,7 +296,11 @@ def trainingNetwork(images_folder_train, labels_folder_train, images_folder_val,
 
     ###### SETUP THE NETWORK #####
     net = DeepLab(backbone='resnet', output_stride=16, num_classes=output_classes)
-    state = torch.load("models/deeplab-resnet.pth.tar")
+    if torch.cuda.is_available():
+        state = torch.load("models/deeplab-resnet.pth.tar")
+    else:
+        state = torch.load("models/deeplab-resnet.pth.tar",  map_location=torch.device('cpu')) # CAG
+
     # RE-INIZIALIZE THE CLASSIFICATION LAYER WITH THE RIGHT NUMBER OF CLASSES, DON'T LOAD WEIGHTS OF THE CLASSIFICATION LAYER
     new_dictionary = state['state_dict']
     del new_dictionary['decoder.last_conv.8.weight']
@@ -311,7 +318,8 @@ def trainingNetwork(images_folder_train, labels_folder_train, images_folder_val,
     if USE_CUDA:
         device = torch.device("cuda")
         net.to(device)
-
+    else:
+        device = torch.device("cpu") # CAG
     ##### TRAINING LOOP #####
 
     reduce_lr_patience = 2
@@ -326,7 +334,10 @@ def trainingNetwork(images_folder_train, labels_folder_train, images_folder_val,
 
     # Crossentropy loss
     weights = datasetTrain.weights
-    class_weights = torch.FloatTensor(weights).cuda()
+    if torch.cuda.is_available(): # CAG
+        class_weights = torch.FloatTensor(weights).cuda()
+    else:
+        class_weights = torch.FloatTensor(weights)
     CEloss = nn.CrossEntropyLoss(weight=class_weights, ignore_index=-1)
 
     # weights for GENERALIZED DICE LOSS (GDL)
@@ -463,10 +474,9 @@ def testNetwork(images_folder, labels_folder, labels_dictionary, target_classes,
     datasetTest.weights = dataset_train.weights
     datasetTest.dataset_average = dataset_train.dataset_average
     datasetTest.dict_target = dataset_train.dict_target
-
     output_classes = dataset_train.num_classes
 
-    batchSize = 4
+    batchSize = 1
     dataloaderTest = DataLoader(datasetTest, batch_size=batchSize, shuffle=False, num_workers=0, drop_last=True,
                             pin_memory=True)
 

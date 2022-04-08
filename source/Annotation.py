@@ -35,11 +35,11 @@ from source import utils
 
 import pandas as pd
 from scipy import ndimage as ndi
-from skimage.morphology import binary_dilation, binary_erosion
-from skimage.segmentation import watershed
+from skimage.morphology import watershed, binary_dilation, binary_erosion
 from source.Blob import Blob
 import source.Mask as Mask
 
+from PyQt5.QtWidgets import QApplication
 #from PIL import Image as Img  #for debug
 
 #refactor: change name to annotationS
@@ -348,7 +348,7 @@ class Annotation(QObject):
         #draw the points to separate the areas
         Mask.paintPoints(mask, box, points, 3)
 
-        
+
         label_image = measure.label(mask, connectivity=1)
 
 
@@ -390,7 +390,7 @@ class Annotation(QObject):
             else:
                 final_mask[tuple(region.coords.T)] = 0
 
-        blob.updateUsingMask(box, final_mask) 
+        blob.updateUsingMask(box, final_mask)
 
 
     def editBorder1(self, blob, lines):
@@ -460,7 +460,7 @@ class Annotation(QObject):
         mask1 = ndi.binary_fill_holes(mask)
         selem = np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0]])
         mask = binary_erosion(mask1, selem) | mask
-        
+
         # now draw in black the part of the points inside the contour
         Mask.paintPoints(mask, box, snapped_points, 0)
 
@@ -598,8 +598,7 @@ class Annotation(QObject):
 
         return count, tot_area
 
-
-    def import_label_map(self, filename, labels_dictionary, offset, scale, create_holes=False):
+    def import_label_map(self, filename, labels_dictionary, offset, scale, progress, create_holes=False):
         """
         It imports a label map and create the corresponding blobs.
         The offset is stored as a [top, left] coordinates and scale are the scale factors of X and Y axis respectively.
@@ -614,9 +613,10 @@ class Annotation(QObject):
         qimg_label_map = qimg_label_map.scaled(w_rescaled, h_rescaled, Qt.IgnoreAspectRatio, Qt.FastTransformation)
 
         label_map = utils.qimageToNumpyArray(qimg_label_map)
+
         label_map = label_map.astype(np.int32)
 
-        # RGB -> label code association (ok, it is a dirty trick but it saves time..)
+        # RGB -> label code association (ok, it is a dirty trick but it saves time...)
         label_coded = label_map[:, :, 0] + (label_map[:, :, 1] << 8) + (label_map[:, :, 2] << 16)
 
         labels = measure.label(label_coded, connectivity=1)
@@ -627,8 +627,15 @@ class Annotation(QObject):
         offset_x = offset[1]
         offset_y = offset[0]
         created_blobs = []
+        num_iter = 0
+        total_iter = len(measure.regionprops(labels))
+        modul = int(total_iter/25)
+
         for region in measure.regionprops(labels):
+            if num_iter % modul == 0:
+                updateProgressBar(progress, "Loading label image: ", num_iter, total_iter)
             if region.area > too_much_small_area:
+
                 id = len(self.seg_blobs)
 
                 blob = Blob(region, offset_x, offset_y, self.getFreeId())
@@ -637,7 +644,6 @@ class Annotation(QObject):
                 row = region.coords[0, 0]
                 col = region.coords[0, 1]
                 color = label_map[row, col]
-
                 for key in labels_dictionary.keys():
                     c = labels_dictionary[key].fill
                     if c[0] == color[0] and c[1] == color[1] and c[2] == color[2]:
@@ -646,15 +652,16 @@ class Annotation(QObject):
                 if create_holes or blob.class_name != 'Empty':
                     created_blobs.append(blob)
 
+            num_iter += 1
+        updateProgressBar(progress, "Loading label image: ", num_iter, total_iter)
         return created_blobs
-
 
     def export_data_table(self, project, image, filename):
 
         working_area = project.working_area
         scale_factor = image.pixelSize()
         date = image.acquisition_date
-        
+
         # create a list of instances
         name_list = []
 
@@ -753,3 +760,14 @@ class Annotation(QObject):
     def export_image_data_for_Scripps(self, size, filename, project):
         label_map = self.create_label_map(size, labels_dictionary=project.labels, working_area=project.working_area)
         label_map.save(filename, 'png')
+
+def updateProgressBar(progress_bar, prefix_message, num_iter, total_iter):
+    """
+    Update progress bar according to the number of iterations done.
+    """
+    perc_training = round((100.0 * num_iter) / total_iter)
+    txt = prefix_message + str(perc_training) + " %"
+    progress_bar.setMessage(txt)
+    #perc_training = round((100.0 * num_iter) / total_iter)
+    progress_bar.setProgress(perc_training)
+    QApplication.processEvents()

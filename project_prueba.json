@@ -1,0 +1,239 @@
+{
+ "filename": "project_prueba.json",
+ "working_area": null,
+ "dictionary_name": "scripps",
+ "dictionary_description": "These color codes are the ones typically used by the Scripps Institution of Oceanography (UCSD)",
+ "labels": {
+  "Empty": {
+   "id": "Empty",
+   "name": "Empty",
+   "description": null,
+   "fill": [
+    127,
+    127,
+    127
+   ],
+   "border": [
+    200,
+    200,
+    200
+   ],
+   "visible": true
+  },
+  "degradat": {
+   "id": "degradat",
+   "name": "degradat",
+   "description": null,
+   "fill": [
+    255,
+    0,
+    234
+   ],
+   "border": [
+    200,
+    200,
+    200
+   ],
+   "visible": true
+  },
+  "ocre": {
+   "id": "ocre",
+   "name": "ocre",
+   "description": null,
+   "fill": [
+    220,
+    162,
+    80
+   ],
+   "border": [
+    200,
+    200,
+    200
+   ],
+   "visible": true
+  },
+  "ocre clar": {
+   "id": "ocre clar",
+   "name": "ocre clar",
+   "description": null,
+   "fill": [
+    220,
+    204,
+    188
+   ],
+   "border": [
+    200,
+    200,
+    200
+   ],
+   "visible": true
+  },
+  "rosa": {
+   "id": "rosa",
+   "name": "rosa",
+   "description": null,
+   "fill": [
+    239,
+    199,
+    187
+   ],
+   "border": [
+    200,
+    200,
+    200
+   ],
+   "visible": true
+  },
+  "negre": {
+   "id": "negre",
+   "name": "negre",
+   "description": null,
+   "fill": [
+    44,
+    39,
+    46
+   ],
+   "border": [
+    200,
+    200,
+    200
+   ],
+   "visible": true
+  },
+  "gris clar": {
+   "id": "gris clar",
+   "name": "gris clar",
+   "description": null,
+   "fill": [
+    161,
+    163,
+    176
+   ],
+   "border": [
+    200,
+    200,
+    200
+   ],
+   "visible": true
+  },
+  "blanc": {
+   "id": "blanc",
+   "name": "blanc",
+   "description": null,
+   "fill": [
+    244,
+    239,
+    235
+   ],
+   "border": [
+    200,
+    200,
+    200
+   ],
+   "visible": true
+  },
+  "gris fosc": {
+   "id": "gris fosc",
+   "name": "gris fosc",
+   "description": null,
+   "fill": [
+    76,
+    74,
+    88
+   ],
+   "border": [
+    200,
+    200,
+    200
+   ],
+   "visible": true
+  },
+  "verd": {
+   "id": "verd",
+   "name": "verd",
+   "description": null,
+   "fill": [
+    108,
+    105,
+    90
+   ],
+   "border": [
+    200,
+    200,
+    200
+   ],
+   "visible": true
+  },
+  "magenta": {
+   "id": "magenta",
+   "name": "magenta",
+   "description": null,
+   "fill": [
+    117,
+    73,
+    70
+   ],
+   "border": [
+    200,
+    200,
+    200
+   ],
+   "visible": true
+  },
+  "vermell": {
+   "id": "vermell",
+   "name": "vermell",
+   "description": null,
+   "fill": [
+    255,
+    58,
+    92
+   ],
+   "border": [
+    200,
+    200,
+    200
+   ],
+   "visible": true
+  }
+ },
+ "images": [
+  {
+   "rect": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "map_px_to_mm_factor": "",
+   "width": 4160,
+   "height": 6240,
+   "annotations": [],
+   "layers": [],
+   "channels": [
+    {
+     "filename": "../8Vpt1xMA.jpeg",
+     "type": "RGB"
+    }
+   ],
+   "id": "dfvbgn",
+   "name": "dfvbgn",
+   "workspace": [],
+   "export_dataset_area": [],
+   "acquisition_date": "2022-04-08",
+   "georef_filename": "",
+   "metadata": {},
+   "grid": null
+  }
+ ],
+ "correspondences": {},
+ "genet": {},
+ "region_attributes": {
+  "name": "",
+  "description": "",
+  "data": []
+ },
+ "spatial_reference_system": null,
+ "metadata": {},
+ "image_metadata_template": {}
+}

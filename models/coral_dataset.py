@@ -334,7 +334,7 @@ class CoralsDataset(Dataset):
                 class_sample_count[existing_labels[j]] += counts[j]
 
             sys.stdout.write("\rComputing frequencies... %.2f"% ((i * 100.0) / float(N)))
-
+        print()
         true_dict_target = dict()
         tot = np.sum(class_sample_count)
         temp_weights = []
@@ -463,7 +463,11 @@ class CoralsDataset(Dataset):
 
         img = np.zeros((pred_indices.shape[0], pred_indices.shape[1], 3), dtype='uint8')
 
-        class_names = list(self.dict_target)
+        class_names = [""]*len(self.dict_target)
+        for key in self.dict_target:
+            pos = self.dict_target[key]
+            class_names[pos] = key
+
 
         for i in range(pred_indices.shape[0]):
             for j in range(pred_indices.shape[1]):
@@ -479,4 +483,3 @@ class CoralsDataset(Dataset):
         # classification map
         image_class = PILimage.fromarray(img, 'RGB')
         image_class.save(filename, format="PNG")
-

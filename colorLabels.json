@@ -1,0 +1,182 @@
+{
+  "Name": "",
+  "Description": "",
+  "Labels": [
+    {
+      "id": "degradat",
+      "name": "degradat",
+      "description": null,
+      "fill": [
+        255,
+        0,
+        234
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "ocre",
+      "name": "ocre",
+      "description": null,
+      "fill": [
+        220,
+        162,
+        80
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "ocre clar",
+      "name": "ocre clar",
+      "description": null,
+      "fill": [
+        220,
+        204,
+        188
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "rosa",
+      "name": "rosa",
+      "description": null,
+      "fill": [
+        239,
+        199,
+        187
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "negre",
+      "name": "negre",
+      "description": null,
+      "fill": [
+        44,
+        39,
+        46
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "gris clar",
+      "name": "gris clar",
+      "description": null,
+      "fill": [
+        161,
+        163,
+        176
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "blanc",
+      "name": "blanc",
+      "description": null,
+      "fill": [
+        244,
+        239,
+        235
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "gris fosc",
+      "name": "gris fosc",
+      "description": null,
+      "fill": [
+        76,
+        74,
+        88
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "verd",
+      "name": "verd",
+      "description": null,
+      "fill": [
+        108,
+        105,
+        90
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "magenta",
+      "name": "magenta",
+      "description": null,
+      "fill": [
+        117,
+        73,
+        70
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "vermell",
+      "name": "vermell",
+      "description": null,
+      "fill": [
+        255,
+        58,
+        92
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    }
+  ]
+}
