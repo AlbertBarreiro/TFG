@@ -904,6 +904,9 @@ class TagLab(QMainWindow):
         createDicAct = QAction("Labels Dictionary Editor...", self)
         createDicAct.triggered.connect(self.createDictionary)
 
+        createDcyLayer = QAction("Create decay layer", self)
+        createDcyLayer.triggered.connect(self.createDecayLayer)
+
         regionAttributesAct = QAction("Region Attributes...", self)
         regionAttributesAct.triggered.connect(self.editRegionAttributes)
 
@@ -1042,6 +1045,8 @@ class TagLab(QMainWindow):
         self.projectmenu.addAction(setWorkingAreaAct)
         self.projectmenu.addSeparator()
         self.projectmenu.addAction(createDicAct)
+        self.projectmenu.addSeparator()
+        self.projectmenu.addAction(createDcyLayer)
         self.projectmenu.addSeparator()
         self.projectmenu.addAction(regionAttributesAct)
 
@@ -2991,6 +2996,12 @@ class TagLab(QMainWindow):
             self.dictionary_widget.deletelabel[str].connect(self.deleteLabelfromDictionary)
             self.dictionary_widget.closewidget.connect(self.closeDictionaryWidget)
             self.dictionary_widget.show()
+
+    @pyqtSlot()
+    def createDecayLayer(self):
+        print("IT WORKSSS")
+        return
+
 
     @pyqtSlot()
     def closeDictionaryWidget(self):
