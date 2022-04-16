@@ -7,10 +7,13 @@ import pandas as pd
 
 class Correspondences(object):
 
-    def __init__(self, img_source, img_target, correspondences = None):
+    def __init__(self, img_source, source_annotations, img_target, target_annotations, correspondences = None):
 
         self.source = img_source
+        self.source_annotations = source_annotations
         self.target = img_target
+        self.target_annotations = target_annotations
+
         self.correspondences = []
         self.dead = []
         self.born = []
@@ -181,7 +184,7 @@ class Correspondences(object):
         else:
             self.data.loc[self.data["Blob2"] == old_blob.id, "Blob2"] = new_blob.id
             self.data.loc[self.data["Blob2"] == old_blob.id, "Area2"] = self.area_in_sq_cm(new_blob.area, False)
- 
+
     def set(self, sourceblobs, targetblobs):
 
         #assumes one oth the two list has 1 blob only.
@@ -458,4 +461,3 @@ class Correspondences(object):
             index = all_blobs.index(id)
             if blobs2[index].class_name != 'Empty':
                 self.born.append([-1, -1, id, 0.0, blobs2[index].area, blobs2[index].class_name, 'born', 'none'])
-

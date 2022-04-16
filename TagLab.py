@@ -75,6 +75,7 @@ from source.QtProjectWidget import QtProjectWidget
 from source.QtProjectEditor import QtProjectEditor
 from source.Project import Project, loadProject
 from source.Image import Image
+from source.Annotation import Annotation
 from source.MapClassifier import MapClassifier
 from source.NewDataset import NewDataset
 from source.QtGridWidget import QtGridWidget
@@ -158,6 +159,7 @@ class TagLab(QMainWindow):
 
         self.project = Project()         # current project
         self.last_image_loaded = None
+        self.last_annotation_loaded = None
 
         self.map_3D_filename = None    #refactor THIS!
         self.map_image_filename = None #"map.png"  #REFACTOR to project.map_filename
@@ -421,7 +423,7 @@ class TagLab(QMainWindow):
         self.layers_widget.setProject(self.project)
         self.layers_widget.showImage.connect(self.showImage)
         self.layers_widget.toggleLayer.connect(self.toggleLayer)
-        self.layers_widget.toggleAnnotations.connect(self.toggleAnnotations)
+        self.layers_widget.showAnnotations.connect(self.showAnnotations)
         self.layers_widget.deleteLayer.connect(self.deleteLayer)
 
 
@@ -430,7 +432,7 @@ class TagLab(QMainWindow):
         self.default_dictionary = self.settings_widget.settings.value("default-dictionary",
                                                 defaultValue="dictionaries/scripps.json", type=str)
         self.project.loadDictionary(self.default_dictionary)
-        self.labels_widget.setLabels(self.project, None)
+        self.labels_widget.setLabels(self.project, None, None)
 
         groupbox_style = "QGroupBox\
           {\
@@ -598,7 +600,7 @@ class TagLab(QMainWindow):
         self.deepextreme_net = None
         self.classifier = None
 
-        # a dirty trick to adjust all the size..
+        # a dirty trick to adjust all the size...
         self.showMinimized()
         self.showMaximized()
 
@@ -1699,7 +1701,7 @@ class TagLab(QMainWindow):
             if splitScreenAction is not None:
                 splitScreenAction.setText("Enable Split Screen")
 
-        # just in case..
+        # just in case...
         self.viewerplus2.viewUpdated[QRectF].connect(self.mapviewer.drawOverlayImage)
 
         # disconnect viewer 2 slots
@@ -1709,7 +1711,7 @@ class TagLab(QMainWindow):
         self.split_screen_flag = False
 
         self.activeviewer = self.viewerplus
-        self.updatePanels()
+        self.updatePanelsWithoutAnnotations()
 
     def enableSplitScreen(self):
 
@@ -1775,7 +1777,7 @@ class TagLab(QMainWindow):
             self.compare_panel.show()
             self.data_panel.hide()
             self.datadock.setWindowTitle("Comparison Table")
-            self.updatePanels()
+            self.updatePanelsWithoutAnnotations()
 
             # test
 
@@ -2044,7 +2046,7 @@ class TagLab(QMainWindow):
             self.inactiveviewer.resetTools()
 
             # update panels accordingly
-            self.updatePanels()
+            self.updatePanelsWithoutAnnotations()
 
     def updateImageSelectionMenu(self):
 
@@ -2225,6 +2227,7 @@ class TagLab(QMainWindow):
         self.project = Project()
         self.project.loadDictionary(self.default_dictionary)
         self.last_image_loaded = None
+        self.last_annotation_loaded = None
         self.activeviewer = None
         self.contextMenuPosition = None
         self.data_panel.clear()
@@ -2999,8 +3002,17 @@ class TagLab(QMainWindow):
 
     @pyqtSlot()
     def createDecayLayer(self):
-        print("IT WORKSSS")
-        return
+
+        image = self.last_image_loaded
+        image.addNewDecayLayer()
+        self.updateToolStatus()
+        self.updateImageSelectionMenu()
+
+
+        self.layers_widget.setProject(self.project)
+        self.showImage(image)
+
+
 
 
     @pyqtSlot()
@@ -3035,7 +3047,7 @@ class TagLab(QMainWindow):
         self.project.setDictionaryFromListOfLabels(labels_list)
 
         # update labels widget
-        self.updatePanels()
+        self.updatePanelsWithoutAnnotations()
 
         # redraw all blobs
         if self.viewerplus is not None:
@@ -3067,7 +3079,7 @@ class TagLab(QMainWindow):
                     self.activeviewer.setBlobClass(blob, newname)
 
         # update labels widget
-        self.updatePanels()
+        self.updatePanelsWithoutAnnotations()
 
         # redraw all blobs
         if self.viewerplus is not None:
@@ -3090,7 +3102,7 @@ class TagLab(QMainWindow):
         self.project.setDictionaryFromListOfLabels(labels_list)
 
         # update labels widget
-        self.updatePanels()
+        self.updatePanelsWithoutAnnotations()
 
         # redraw all blobs
         if self.viewerplus is not None:
@@ -3108,9 +3120,9 @@ class TagLab(QMainWindow):
 
         self.update_panels_flag = True
 
-    def updatePanels(self):
+    def updatePanelsWithoutAnnotations(self):
         """
-        Update panels (labels, layers, data panel, compare panel and map viewer)
+        Update panels that don't show annotation info (labels, layers, data panel, compare panel and map viewer)
         """
 
         if self.update_panels_flag is False:
@@ -3122,7 +3134,6 @@ class TagLab(QMainWindow):
             if self.activeviewer.image is not None:
                 image = self.activeviewer.image
 
-        self.labels_widget.setLabels(self.project, image)
 
         # update layers
         if self.split_screen_flag is False:
@@ -3146,16 +3157,35 @@ class TagLab(QMainWindow):
             self.mapviewer.setPixmap(thumb)
             self.mapviewer.setOpacity(0.5)
 
-        # update data panel
-        self.updateDataPanel()
+
 
         self.updateImageSelectionMenu()
 
+
+
+    def updatePanelsWithAnnotations(self):
+        # update labels
+        image = None
+        if self.activeviewer is not None:
+            if self.activeviewer.image is not None:
+                image = self.activeviewer.image
+
+        # update labels
+        annotations = None
+        if self.activeviewer is not None:
+            if self.activeviewer.annotations is not None:
+                annotations = self.activeviewer.annotations
+
+
+        self.labels_widget.setLabels(self.project, image, annotations)
+        # update data panel
+        self.updateDataPanel()
+
         # molto sporco per collegare data panel, dovrebbe andare in data panel
         if image is not None:
-            image.annotations.blobUpdated.connect(self.updatePanelInfo)
-            image.annotations.blobAdded.connect(self.updatePanelInfo)
-            image.annotations.blobRemoved.connect(self.resetPanelInfo)
+            annotations.blobUpdated.connect(self.updatePanelInfo)
+            annotations.blobAdded.connect(self.updatePanelInfo)
+            annotations.blobRemoved.connect(self.resetPanelInfo)
 
     #REFACTOR
     @pyqtSlot()
@@ -3190,7 +3220,7 @@ class TagLab(QMainWindow):
 
         # add an image and its annotation to the project
         self.project.addNewImage(image)
-        self.updateToolStatus()
+        self.updateToolStatus() # TODO quizá se debería activar con las anotaciones
         self.updateImageSelectionMenu()
         self.layers_widget.setProject(self.project)
         self.mapWidget.close()
@@ -3316,27 +3346,56 @@ class TagLab(QMainWindow):
             self.doUpdatePanels()
 
             self.last_image_loaded = image
-
+            self.last_annotation_loaded  = None
             index = self.project.images.index(image)
             self.updateComboboxSourceImage(index)
             self.updateComboboxSourceImage(index)
             self.disableSplitScreen()
             self.setBlobVisualization()
 
-
-            QApplication.restoreOverrideCursor()
-
         except Exception as e:
             msgBox = QMessageBox()
             msgBox.setWindowTitle(self.TAGLAB_VERSION)
             msgBox.setText("Error loading map:" + str(e))
             msgBox.exec()
+        finally:
+            QApplication.restoreOverrideCursor()
+
+    @pyqtSlot(Image, Annotation, bool)
+    def showAnnotations(self, image, annotations, enable):
+        """
+        Show the annotation into the main view and update the map viewer accordingly.
+        """
+
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            if self.last_annotation_loaded != annotations:
+                self.toggleAnnotations(image, False)
+
+                self.last_annotation_loaded = annotations
+
+                self.viewerplus.setAnnotations(annotations)
+                self.toggleAnnotations(image, enable) # first need to activate blobs
+                self.updatePanelsWithAnnotations()
+            else:
+               self.toggleAnnotations(image, enable)
+
+
+        except Exception as e:
+            msgBox = QMessageBox()
+            msgBox.setWindowTitle(self.TAGLAB_VERSION)
+            msgBox.setText("Error loading annotation:" + str(e))
+            msgBox.exec()
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def updateDataPanel(self):
 
         if self.activeviewer is not None:
             if self.activeviewer.image is not None:
-                self.data_panel.setTable(self.project, self.activeviewer.image)
+                self.data_panel.setTable(self.project, self.activeviewer.image, self.activeviewer.annotations)
+
 
     @pyqtSlot(Layer, bool)
     def toggleLayer(self, layer, enable):
@@ -3347,7 +3406,7 @@ class TagLab(QMainWindow):
             layer.disable()
             self.viewerplus.undrawLayer(layer)
 
-    @pyqtSlot(Image, bool)
+    @pyqtSlot()
     def toggleAnnotations(self, image, enable):
         if self.viewerplus.image == image:
             self.viewerplus.toggleAnnotations(enable)
@@ -4174,8 +4233,9 @@ class TagLab(QMainWindow):
             box.setText("Could not load the file " + filename)
             box.exec()
             return
+        finally:
+            QApplication.restoreOverrideCursor()
 
-        QApplication.restoreOverrideCursor()
 
         self.setProjectTitle(self.project.filename)
 
@@ -4185,6 +4245,7 @@ class TagLab(QMainWindow):
         # show the first map present in project
         if len(self.project.images) > 0:
             image = self.project.images[0]
+            #annotations = image.decayLayers[0]
             self.showImage(image)
             self.move()
 
@@ -4212,6 +4273,7 @@ class TagLab(QMainWindow):
             msgBox = QMessageBox()
             msgBox.setText("The json project contains an error:\n {0}\n\nPlease contact us.".format(str(e)))
             msgBox.exec()
+            QApplication.restoreOverrideCursor()
             return
 
         # append the annotated images to the current ones

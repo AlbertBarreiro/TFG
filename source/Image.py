@@ -11,7 +11,7 @@ class Image(object):
     def __init__(self, rect = [0.0, 0.0, 0.0, 0.0],
         map_px_to_mm_factor = 1.0, width = None, height = None, channels = [], id = None, name = None,
         acquisition_date = "",
-        georef_filename = "", workspace = [], metadata = {}, annotations = {}, layers = [],
+        georef_filename = "", workspace = [], metadata = {}, annotationsList =  [], layers = [],
                  grid = {}, export_dataset_area = []):
 
         #we have to select a standanrd enforced!
@@ -26,11 +26,17 @@ class Image(object):
         self.width = width
         self.height = height                                     #in pixels!
 
-        self.annotations = Annotation()
-        for data in annotations:
-            blob = Blob(None, 0, 0, 0)
-            blob.fromDict(data)
-            self.annotations.addBlob(blob)
+        self.annotationLayers = []
+        if len(annotationsList) == 0:
+            self.annotationLayers.append(Annotation())
+        else:
+            for annotations in annotationsList:
+                annotationFilled = Annotation()
+                for data in annotations:
+                    blob = Blob(None, 0, 0, 0)
+                    blob.fromDict(data)
+                    annotationFilled.addBlob(blob)
+                self.annotationLayers.append(annotationFilled)
 
         self.layers = []
         for layer_data in layers:
@@ -59,8 +65,9 @@ class Image(object):
         else:
             self.grid = None
 
-        self.cache_data_table = None
-        self.cache_labels_table = None
+
+    def addNewDecayLayer(self):
+        self.annotationLayers.append(Annotation())
 
     def deleteLayer(self, layer):
         self.layers.remove(layer)
@@ -113,13 +120,14 @@ class Image(object):
         self.channels.append(Channel(filename, type))
 
 
-    def create_labels_table(self, labels):
+    def create_labels_table(self, labels, indexAnnotation):
         '''
         Creates a data table for the label panel
         '''
+        annotations = self.annotationLayers[indexAnnotation]
 
-        if self.annotations.table_needs_update is False:
-            return self.cache_labels_table
+        if annotations.table_needs_update is False:
+            return annotations.cache_labels_table
         else:
             dict = {
                 'Visibility': np.zeros(len(labels), dtype=np.int),
@@ -133,31 +141,31 @@ class Image(object):
                 dict['Visibility'][i] = int(label.visible)
                 dict['Color'].append(str(label.fill))
                 dict['Class'].append(label.name)
-                count, new_area = self.annotations.calculate_perclass_blobs_value(label, self.map_px_to_mm_factor)
+                count, new_area = annotations.calculate_perclass_blobs_value(label, self.map_px_to_mm_factor)
                 dict['#'][i] = count
                 dict['Coverage'][i] = new_area
 
             # create dataframe
             df = pd.DataFrame(dict, columns=['Visibility', 'Color', 'Class', '#', 'Coverage'])
-            self.cache_labels_table = df
-            self.annotations.table_needs_update = False
+            annotations.cache_labels_table = df
+            annotations.table_needs_update = False
             return df
 
 
-    def create_data_table(self):
+    def create_data_table(self, indexAnnotation):
         '''
         This create a data table only for the data panel view
         '''
+        annotations = self.annotationLayers[indexAnnotation]
 
-        if self.annotations.table_needs_update is False:
-            return self.cache_data_table
+        if annotations.table_needs_update is False:
+            return annotations.cache_data_table
         else:
             scale_factor = self.pixelSize()
-
             # create a list of instances
             name_list = []
             visible_blobs = []
-            for blob in self.annotations.seg_blobs:
+            for blob in annotations.seg_blobs:
                 if blob.qpath_gitem.isVisible():
                     index = blob.blob_name
                     name_list.append(index)
@@ -177,12 +185,12 @@ class Image(object):
                 dict['Area'][i] = round(blob.area * (scale_factor) * (scale_factor) / 100, 2)
     #            if blob.surface_area > 0.0:
     #                dict['Surf. area'][i] = round(blob.surface_area * (scale_factor) * (scale_factor) / 100, 2)
-
             # create dataframe
             #df = pd.DataFrame(dict, columns=['Id', 'Class', 'Area', 'Surf. area'])
             df = pd.DataFrame(dict, columns=['Id', 'Class', 'Area'])
-            self.cache_data_table = df
-            self.annotations.table_needs_update = False
+            annotations.cache_data_table = df
+
+            annotations.table_needs_update = False
             return df
 
 
@@ -239,11 +247,14 @@ class Image(object):
         """
         return self.getChannel("DEM")
 
+    def getAnnotationPosition(self, annotations):
+        return self.annotationLayers.index(annotations)
+
     def save(self):
         data = self.__dict__.copy()
 
         # cached tables MUST NOT be saved
-        del data["cache_data_table"]
-        del data["cache_labels_table"]
+        #del data["cache_data_table"]
+        #del data["cache_labels_table"]
 
         return data

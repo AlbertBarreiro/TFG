@@ -198,6 +198,7 @@ height: 0px;
         self.labels = None
         self.project = None
         self.activeImg = None
+        self.activeAnnotations = None
         self.active_label_name = "Empty"
 
         self.data_table.clicked.connect(self.clickedCell)
@@ -224,20 +225,21 @@ height: 0px;
            self.active_label_name = self.data['Class'][oldindex.row()]
            self.doubleClickLabel.emit(self.active_label_name)
 
-    def setLabels(self, project, img):
+    def setLabels(self, project, img, annotations):
 
         if self.project is not None:
-          if self.labels == project.labels and self.activeImg == img:
+          if self.labels == project.labels and self.activeImg == img and self.activeAnnotations == annotations:
              return
 
         self.labels = project.labels.copy()
 
         self.project = project
         self.activeImg = img
+        self.activeAnnotations = annotations
         self.active_label_name = "Empty"
 
         # it works also if there is no active image (i.e. img is None)
-        self.data = project.create_labels_table(self.activeImg)
+        self.data = project.create_labels_table(self.activeImg, self.activeAnnotations)
 
         if self.activeImg is not None:
 
@@ -245,22 +247,22 @@ height: 0px;
             # when the signal is emitted
 
             try:
-                self.activeImg.annotations.blobUpdated[Blob,Blob].connect(self.updateBlob, type=Qt.UniqueConnection)
+                self.activeAnnotations.blobUpdated[Blob,Blob].connect(self.updateBlob, type=Qt.UniqueConnection)
             except:
                 pass
 
             try:
-                self.activeImg.annotations.blobAdded[Blob].connect(self.addBlob, type=Qt.UniqueConnection)
+                self.activeAnnotations.blobAdded[Blob].connect(self.addBlob, type=Qt.UniqueConnection)
             except:
                 pass
 
             try:
-                self.activeImg.annotations.blobRemoved[Blob].connect(self.removeBlob, type=Qt.UniqueConnection)
+                self.activeAnnotations.blobRemoved[Blob].connect(self.removeBlob, type=Qt.UniqueConnection)
             except:
                 pass
 
             try:
-                self.activeImg.annotations.blobClassChanged[str,Blob].connect(self.updateBlobClass, type=Qt.UniqueConnection)
+                self.activeAnnotations.blobClassChanged[str,Blob].connect(self.updateBlobClass, type=Qt.UniqueConnection)
             except:
                 pass
 
@@ -397,7 +399,6 @@ height: 0px;
 
         self.sortfilter.endResetModel()
         self.model.endResetModel()
-
         self.data_table.horizontalHeader().showSection(0)
         self.data_table.update()
 
@@ -468,9 +469,3 @@ height: 0px;
     def getActiveLabelName(self):
 
         return self.active_label_name
-
-
-
-
-
-

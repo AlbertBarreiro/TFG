@@ -1,21 +1,21 @@
-# TagLab                                               
-# A semi-automatic segmentation tool                                    
+# TagLab
+# A semi-automatic segmentation tool
 #
-# Copyright(C) 2019                                         
-# Visual Computing Lab                                           
-# ISTI - Italian National Research Council                              
-# All rights reserved.                                                      
-                                                                          
-# This program is free software; you can redistribute it and/or modify      
-# it under the terms of the GNU General Public License as published by      
-# the Free Software Foundation; either version 2 of the License, or         
-# (at your option) any later version.                                       
-                                                                           
-# This program is distributed in the hope that it will be useful,           
-# but WITHOUT ANY WARRANTY; without even the implied warranty of            
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             
-#GNU General Public License (http://www.gnu.org/licenses/gpl.txt)          
-# for more details.                                               
+# Copyright(C) 2019
+# Visual Computing Lab
+# ISTI - Italian National Research Council
+# All rights reserved.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
+# for more details.
 
 """ PyQt image viewer widget for a QPixmap in a QGraphicsView scene with mouse zooming and panning.
     The viewer has also drawing capabilities (differently from QTimage viewer).
@@ -199,15 +199,14 @@ class QtImageViewerPlus(QtImageViewer):
 
         self.undrawAllLayers()
         self.image = image
-        self.annotations = image.annotations
         self.selected_blobs = []
         self.selectionChanged.emit()
         #clear existing layers
 
 
         # draw all the annotations
-        for blob in self.annotations.seg_blobs:
-            self.drawBlob(blob)
+        #for blob in self.annotations.seg_blobs:
+        #    self.drawBlob(blob)
 
         # draw the layers
         self.drawAllLayers()
@@ -223,6 +222,9 @@ class QtImageViewerPlus(QtImageViewer):
         self.setChannel(image.channels[channel_idx])
 
         self.activated.emit()
+
+    def setAnnotations(self, annotations):
+        self.annotations = annotations
 
     def toggleAnnotations(self, enable):
         for blob in self.annotations.seg_blobs:
@@ -309,7 +311,7 @@ class QtImageViewerPlus(QtImageViewer):
 
         # clear annotation data
         self.annotations = Annotation()
-        
+
         # no project is set
         self.project = None
 
@@ -1092,7 +1094,7 @@ class QtImageViewerPlus(QtImageViewer):
         The only function to add annotations. will take care of undo and QGraphicItems.
         """
         self.undo_data.addBlob(blob)
-        self.project.addBlob(self.image, blob)
+        self.project.addBlob(self.image, self.annotations, blob)
         self.drawBlob(blob)
 
         if selected:
@@ -1112,12 +1114,12 @@ class QtImageViewerPlus(QtImageViewer):
         self.undrawBlob(blob)
         self.undo_data.removeBlob(blob)
         #self.annotations.removeBlob(blob)
-        self.project.removeBlob(self.image, blob)
+        self.project.removeBlob(self.image, self.annotations, blob)
 
     def updateBlob(self, old_blob, new_blob, selected = False):
 
         #self.annotations.updateBlob(old_blob, new_blob)
-        self.project.updateBlob(self.image, old_blob, new_blob)
+        self.project.updateBlob(self.image, self.annotations, old_blob, new_blob)
 
         self.removeFromSelectedList(old_blob)
         self.undrawBlob(old_blob)
@@ -1177,7 +1179,7 @@ class QtImageViewerPlus(QtImageViewer):
         if self.tools.tool == "RITM" and self.tools.tools["RITM"].hasPoints():
             self.tools.tools["RITM"].undo_click()
             return
-        
+
         if self.tools.tool in ["FREEHAND", "CUT", "EDITBORDER"]:
             if self.tools.tools["EDITBORDER"].edit_points.undo():
                 return

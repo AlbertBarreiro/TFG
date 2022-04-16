@@ -66,7 +66,8 @@ class Annotation(QObject):
 
         # cache
         self.table_needs_update = True
-
+        self.cache_data_table = None
+        self.cache_labels_table = None
     def addBlob(self, blob, notify=True):
         used = [blob.id for blob in self.seg_blobs]
         if blob.id in used:

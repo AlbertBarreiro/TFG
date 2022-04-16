@@ -176,12 +176,16 @@ class Project(object):
             for key in correspondences.keys():
                 source = correspondences[key]['source']
                 target = correspondences[key]['target']
-                self.correspondences[key] = Correspondences(self.getImageFromId(source), self.getImageFromId(target))
+                source_im = self.getImageFromId(source)
+                source_annotations = source_im.decayLayers[0]   # TODO cuando se guarden correspondencias con la anotacion en concreto habra que cambiarlo
+                target_im = self.getImageFromId(target)
+                target_annotations = target_im.decayLayers[0]
+                self.correspondences[key] = Correspondences(source_im, source_annotations, target_im, target_annotations)
                 self.correspondences[key].fillTable(correspondences[key]['correspondences'])
 
         self.genet = Genet(self)
         self.region_attributes = RegionAttributes(**region_attributes)
-        
+
         self.spatial_reference_system = spatial_reference_system        #if None we assume coordinates in pixels (but Y is up or down?!)
         self.metadata = metadata                                        # project metadata => keyword -> value
         self.image_metadata_template = image_metadata_template          # description of metadata keywords expected in images
@@ -369,28 +373,28 @@ class Project(object):
         corr.updateGenets()
         return corr
 
-    def addBlob(self, image, blob):
+    def addBlob(self, image, annotations, blob):
 
-        # update image annotations
-        image.annotations.addBlob(blob)
+        # update annotations
+        annotations.addBlob(blob)
 
         # update correspondences
         for corr in self.findCorrespondences(image):
             corr.addBlob(image, blob)
 
-    def removeBlob(self, image, blob):
+    def removeBlob(self, image, annotations, blob):
 
-        # updata image annotations
-        image.annotations.removeBlob(blob)
+        # updata annotations
+        annotations.removeBlob(blob)
 
         # update correspondences
         for corr in self.findCorrespondences(image):
             corr.removeBlob(image, blob)
 
-    def updateBlob(self, image, old_blob, new_blob):
+    def updateBlob(self, image, annotations, old_blob, new_blob):
 
-        # update image annotations
-        image.annotations.updateBlob(old_blob, new_blob)
+        # update annotations
+        annotations.updateBlob(old_blob, new_blob)
 
         # update correspondences
         for corr in self.findCorrespondences(image):
@@ -439,7 +443,7 @@ class Project(object):
         correspondences= self.findCorrespondences(image)
         for corr in correspondences:
             corr.updateAreas(use_surface_area=flag_surface_area)
-    
+
     def computeCorrespondences(self, img_source_idx, img_target_idx):
         """
         Compute the correspondences between an image pair.
@@ -480,7 +484,7 @@ class Project(object):
         corr.updateGenets()
 
 
-    def create_labels_table(self, image):
+    def create_labels_table(self, image, annotations):
 
         '''
         It creates a data table for the label panel.
@@ -501,11 +505,11 @@ class Project(object):
             dict['Color'].append(str(label.fill))
             dict['Class'].append(label.name)
 
-            if image is None:
+            if annotations is None:
                 count = 0
                 new_area = 0.0
             else:
-                count, new_area = image.annotations.calculate_perclass_blobs_value(label, image.pixelSize())
+                count, new_area = annotations.calculate_perclass_blobs_value(label, image.pixelSize())
 
             dict['#'][i] = count
             dict['Coverage'][i] = new_area
@@ -513,8 +517,3 @@ class Project(object):
         # create dataframe
         df = pd.DataFrame(dict, columns=['Visibility', 'Color', 'Class', '#', 'Coverage'])
         return df
-
-
-
-
-

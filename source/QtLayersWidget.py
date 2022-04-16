@@ -5,6 +5,7 @@ from pathlib import Path
 import os
 from source.Project import Project
 from source.Image import Image
+from source.Annotation import Annotation
 from source.Shape import Layer
 
 
@@ -15,7 +16,7 @@ imdir = imdir.replace('source', '')
 class QtLayersWidget(QTreeWidget):
     showImage = pyqtSignal(Image)
     toggleLayer = pyqtSignal(Layer, bool)
-    toggleAnnotations = pyqtSignal(Image, bool)
+    showAnnotations = pyqtSignal(Image, Annotation, bool)
     deleteLayer = pyqtSignal(Image, Layer)
 
     def __init__(self, parent=None):
@@ -38,19 +39,20 @@ class QtLayersWidget(QTreeWidget):
         self.header().setStretchLastSection(False)
         self.setColumnWidth(1, 24)
 
-        self.current_images = None
+        #self.current_images = None
 
     def setProject(self, project):
 
-        if self.current_images == project.images:
-            return
+        #if self.current_images == project.images:
+        #    return
 
-        self.current_images = project.images.copy()
+        #self.current_images = project.images.copy()
 
         self.blockSignals(True)
         self.clear()
 
         #items = []
+
         for image in project.images:
             item = QTreeWidgetItem()
             item.setText(0, image.name)
@@ -61,14 +63,15 @@ class QtLayersWidget(QTreeWidget):
             item.type = 'image'
             item.image = image
 
-
-            child = QTreeWidgetItem()
-            child.setText(0, "Annotations")
-            child.setCheckState(0, Qt.Checked)
-            child.setFlags(Qt.NoItemFlags)
-            child.type = 'annotations'
-            child.image = image
-            item.addChild(child)
+            for annotation in image.annotationLayers:
+                child = QTreeWidgetItem()
+                child.setText(0, "Annotations")
+                child.setCheckState(0, Qt.Checked)
+                child.setFlags(Qt.NoItemFlags)
+                child.type = 'annotations'
+                child.image = image
+                child.annotation = annotation
+                item.addChild(child)
 
 
             for layer in image.layers:
@@ -82,10 +85,10 @@ class QtLayersWidget(QTreeWidget):
                 child.type = 'layer'
                 child.layer = layer
                 child.image = image
-                
+
 
                 item.addChild(child)
-                # ui->treeWidget->setItemWidget(items.value(1),0,new QPushButton("Click Me")); // Solution for your problem 
+                # ui->treeWidget->setItemWidget(items.value(1),0,new QPushButton("Click Me")); // Solution for your problem
 
             #items.append(item)
             self.addTopLevelItem(item);
@@ -134,10 +137,30 @@ class QtLayersWidget(QTreeWidget):
                         child.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
                     else:
                         child.setFlags(Qt.NoItemFlags) #Qt.ItemIsEnabled)
+                    child.setCheckState(0, Qt.Unchecked)
 
             it += 1
-        
+
         self.blockSignals(False)
+
+    def setAnnotations(self, itemChanged):
+        self.blockSignals(True)
+
+        it = QTreeWidgetItemIterator(self)
+        while it.value():
+            item = it.value()
+            if item.type == 'image' and itemChanged.image == item.image:
+                for i in range(item.childCount()):
+                    child = item.child(i)
+                    if child.type == 'annotations':
+                        if child.annotation != itemChanged.annotation:
+                            child.setCheckState(0, Qt.Unchecked)
+
+
+            it += 1
+
+        self.blockSignals(False)
+
 
 
     def itemChecked(self, item):
@@ -150,4 +173,5 @@ class QtLayersWidget(QTreeWidget):
             self.toggleLayer.emit(item.layer, checked)
 
         elif item.type == 'annotations':
-            self.toggleAnnotations.emit(item.image, checked)
+            self.setAnnotations(item)
+            self.showAnnotations.emit(item.image, item.annotation, checked)

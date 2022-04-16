@@ -41,11 +41,12 @@ class Genet:
         #assign genets to blobs with no assigned genet
         count = len(genets)
         for img in self.project.images:
-            sorted_blobs = sorted(img.annotations.seg_blobs, key=lambda x: x.id)
-            for b in sorted_blobs:
-                b.genet = count
-                genets.append(count)
-                count += 1
+            for annotations in img.annotationLayers:
+                sorted_blobs = sorted(annotations.seg_blobs, key=lambda x: x.id)
+                for b in sorted_blobs:
+                    b.genet = count
+                    genets.append(count)
+                    count += 1
 
         #remap all the correspondending blobs using genets[]
         for corrs in self.project.correspondences.values():
@@ -54,8 +55,8 @@ class Genet:
                 id2 = int(row['Blob2'])
                 if id1 == -1 or id2 == -1:  #born or dead corals
                     continue
-                blob1 = corrs.source.annotations.blobById(id1)
-                blob2 = corrs.target.annotations.blobById(id2)
+                blob1 = corrs.source_annotations.blobById(id1)
+                blob2 = corrs.target_annotations.blobById(id2)
 
                 while blob1.genet != genets[blob1.genet]:
                     blob1.genet = genets[blob1.genet]
@@ -72,10 +73,11 @@ class Genet:
                         g = destination
 
         for img in self.project.images:
-            for b in img.annotations.seg_blobs:
-                while b.genet != genets[b.genet]:  #follow the link to the
-                    b.genet = genets[b.genet]
-                #print("Image ", img.name, "Blob ", b.id, " has genet ", b.genet)
+            for annotations in img.annotationLayers:
+                for b in annotations.seg_blobs:
+                    while b.genet != genets[b.genet]:  #follow the link to the
+                        b.genet = genets[b.genet]
+                    #print("Image ", img.name, "Blob ", b.id, " has genet ", b.genet)
 
 
     #ox and oy are the origin of bbox of the blob, dx and dy is a translation in svg.
@@ -237,6 +239,3 @@ class Genet:
 
     def save(self):
         return {}
-
-
-

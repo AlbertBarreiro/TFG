@@ -1,21 +1,21 @@
-# TagLab                                               
-# A semi-automatic segmentation tool                                    
+# TagLab
+# A semi-automatic segmentation tool
 #
 # Copyright(C) 2021
-# Visual Computing Lab                                           
-# ISTI - Italian National Research Council                              
-# All rights reserved.                                                      
-                                                                          
-# This program is free software; you can redistribute it and/or modify      
-# it under the terms of the GNU General Public License as published by      
-# the Free Software Foundation; either version 2 of the License, or         
-# (at your option) any later version.                                       
-                                                                           
-# This program is distributed in the hope that it will be useful,           
-# but WITHOUT ANY WARRANTY; without even the implied warranty of            
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             
+# Visual Computing Lab
+# ISTI - Italian National Research Council
+# All rights reserved.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
-# for more details.                                               
+# for more details.
 from PyQt5.QtCore import Qt, QAbstractTableModel, QItemSelectionModel, QSortFilterProxyModel, QRegExp, QModelIndex, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QSizePolicy, QComboBox, QLabel, QTableView, QHeaderView, \
     QHBoxLayout, QVBoxLayout, QAbstractItemView, QStyledItemDelegate, QAction, QMenu, QToolButton, QGridLayout, QLineEdit
@@ -52,7 +52,7 @@ class TableModel(QAbstractTableModel):
                 txt = str(value)
 
             return txt
-        
+
         if role == Qt.UserRole:
             if index.column() == 1:
                 return str(value)
@@ -135,7 +135,7 @@ height: 0px;
 
         self.searchId = QLineEdit("")
         self.searchId.textChanged[str].connect(self.selectById)
-        
+
         filter_layout = QHBoxLayout()
         filter_layout.addWidget(QLabel("Search Id: "))
         filter_layout.addWidget(self.searchId)
@@ -148,42 +148,41 @@ height: 0px;
 
         self.project = None
         self.activeImg = None
+        self.activateAnnotation = None
 
-    def setTable(self, project, img):
+    def setTable(self, project, img, annotations):
 
-        if self.project == project and self.activeImg == img:
+        if self.project == project and self.activeImg == img and self.activateAnnotation == annotations:
             return
-
         self.project = project
         self.activeImg = img
+        self.activateAnnotation = annotations
 
         # establish UNIQUE connections, otherwise the slots will be called MORE THAN ONE TIME
         # when the signal is emitted
-
         if self.activeImg is not None:
 
             try:
-                self.activeImg.annotations.blobUpdated[Blob,Blob].connect(self.updateBlob, type=Qt.UniqueConnection)
+                self.activateAnnotation.blobUpdated[Blob,Blob].connect(self.updateBlob, type=Qt.UniqueConnection)
             except:
                 pass
 
             try:
-                self.activeImg.annotations.blobAdded[Blob].connect(self.addBlob, type=Qt.UniqueConnection)
+                self.activateAnnotation.blobAdded[Blob].connect(self.addBlob, type=Qt.UniqueConnection)
             except:
                 pass
 
             try:
-                self.activeImg.annotations.blobRemoved[Blob].connect(self.removeBlob, type=Qt.UniqueConnection)
+                self.activateAnnotation.blobRemoved[Blob].connect(self.removeBlob, type=Qt.UniqueConnection)
             except:
                 pass
 
             try:
-                self.activeImg.annotations.blobClassChanged[str,Blob].connect(self.updateBlobClass, type=Qt.UniqueConnection)
+                self.activateAnnotation.blobClassChanged[str,Blob].connect(self.updateBlobClass, type=Qt.UniqueConnection)
             except:
                 pass
-
-            self.data = self.activeImg.create_data_table()
-
+            index = self.activeImg.getAnnotationPosition(self.activateAnnotation)
+            self.data = self.activeImg.create_data_table(index)
         if self.model is None:
             self.model = TableModel(self.data)
             self.sortfilter = QSortFilterProxyModel(self)
@@ -302,7 +301,3 @@ height: 0px;
             value = self.data_table.horizontalScrollBar().value()
             column = self.data_table.columnAt(value)
             self.data_table.scrollTo(self.data_table.model().index(indexes[0].row(), column))
-
-
-
-
