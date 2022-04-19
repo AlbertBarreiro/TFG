@@ -22,6 +22,7 @@ from PyQt5.QtWidgets import QWidget, QSizePolicy, QComboBox, QLabel, QTableView,
 from PyQt5.QtGui import QColor
 import pandas as pd
 from source.Blob import Blob
+from source.Image import Image
 
 class TableModel(QAbstractTableModel):
     def __init__(self, data):
@@ -130,8 +131,8 @@ height: 0px;
 """);
 
 
-        self.model = None
-        self.data = None
+
+        
 
         self.searchId = QLineEdit("")
         self.searchId.textChanged[str].connect(self.selectById)
@@ -149,6 +150,27 @@ height: 0px;
         self.project = None
         self.activeImg = None
         self.activateAnnotation = None
+
+        self.data = Image.create_data_table_empty()
+        self.model = TableModel(self.data)
+        self.sortfilter = QSortFilterProxyModel(self)
+        self.sortfilter.setSourceModel(self.model)
+        self.sortfilter.setSortRole(Qt.UserRole)
+        self.data_table.setModel(self.sortfilter)
+
+        self.data_table.setVisible(False)
+        self.data_table.verticalHeader().hide()
+        self.data_table.setVisible(True)
+        self.data_table.setEditTriggers(QAbstractItemView.DoubleClicked)
+
+        self.data_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.data_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.data_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.data_table.horizontalHeader().showSection(0)
+        self.data_table.update()
+
+        self.data_table.setStyleSheet("QHeaderView::section { background-color: rgb(40,40,40) }")
+        self.data_table.selectionModel().selectionChanged.connect(lambda x: self.selectionChanged.emit())
 
     def setTable(self, project, img, annotations):
 
@@ -183,28 +205,8 @@ height: 0px;
                 pass
             index = self.activeImg.getAnnotationPosition(self.activateAnnotation)
             self.data = self.activeImg.create_data_table(index)
-        if self.model is None:
-            self.model = TableModel(self.data)
-            self.sortfilter = QSortFilterProxyModel(self)
-            self.sortfilter.setSourceModel(self.model)
-            self.sortfilter.setSortRole(Qt.UserRole)
-            self.data_table.setModel(self.sortfilter)
 
-            self.data_table.setVisible(False)
-            self.data_table.verticalHeader().hide()
-            self.data_table.setVisible(True)
-            self.data_table.setEditTriggers(QAbstractItemView.DoubleClicked)
-
-            self.data_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-            self.data_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-            self.data_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
-            self.data_table.horizontalHeader().showSection(0)
-            self.data_table.update()
-
-            self.data_table.setStyleSheet("QHeaderView::section { background-color: rgb(40,40,40) }")
-            self.data_table.selectionModel().selectionChanged.connect(lambda x: self.selectionChanged.emit())
-        else:
-            self.updateTable(self.data)
+        self.updateTable(self.data)
 
     @pyqtSlot(Blob)
     def addBlob(self, blob):

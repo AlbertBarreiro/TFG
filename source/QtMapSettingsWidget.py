@@ -40,11 +40,11 @@ class QtMapSettingsWidget(QWidget):
         TEXT_SPACE = 100
 
         self.fields = {
-            "name"            : {"name": "Map Name:"        , "value": "", "place": "Name of the map"        , "width": 300, "action": None },
-            "rgb_filename"    : {"name": "RGB Image:"       , "value": "", "place": "Path of the rgb image"  , "width": 300, "action": self.chooseMapFile },
-            "depth_filename"  : {"name": "Depth Image:"     , "value": "", "place": "Path of the depth image", "width": 300, "action": self.chooseDEMFile },
-            "acquisition_date": {"name": "Acquisition Date:", "value": "", "place": "YYYY-MM-DD"             , "width": 150, "action": None },
-            "px_to_mm"        : {"name": "Pixel size (mm):"        , "value": "", "place": ""                    , "width": 150, "action": None }
+            "name"            : {"name": "Map Name:"        , "value": "", "place": "Name of the map"        , "width": 300, "action": None                 , "buttonText": ""},
+            "rgb_filename"    : {"name": "RGB Image:"       , "value": "", "place": "Path of the rgb image"  , "width": 300, "action": self.chooseMapFile   , "buttonText": "..." },
+            "depth_filename"  : {"name": "Depth Image:"     , "value": "", "place": "Path of the depth image", "width": 300, "action": self.chooseDEMFile   , "buttonText": "..."},
+            "acquisition_date": {"name": "Acquisition Date:", "value": "", "place": "YYYY-MM-DD"             , "width": 150, "action": None                 , "buttonText": ""},
+            "px_to_mm"        : {"name": "Pixel size (mm):"        , "value": "", "place": ""                , "width": 150, "action": None                 , "buttonText": "" }
         }
         self.data = {}
 
@@ -64,8 +64,8 @@ class QtMapSettingsWidget(QWidget):
             field["edit"] = edit
 
             button = None
-            if field["action"] is not None:
-                button = QPushButton("...")
+            if field["buttonText"] != "":
+                button = QPushButton(field["buttonText"])
                 button.setMaximumWidth(20)
                 button.clicked.connect(field["action"])
                 field["button"] = button

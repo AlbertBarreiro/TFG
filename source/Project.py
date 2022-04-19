@@ -31,12 +31,8 @@ def loadProject(taglab_working_dir, filename, default_dict):
         raise Exception(str(e))
 
 
-    if "Map File" in data:
-        project = loadOldProject(taglab_working_dir, data)
-        project.loadDictionary(default_dict)
-        project.region_attributes = RegionAttributes()
-    else:
-        project = Project(**data)
+
+    project = Project(**data)
 
     f.close()
 
@@ -90,31 +86,6 @@ def loadProject(taglab_working_dir, filename, default_dict):
 
     return project
 
-# WARNING!! The old-style projects do not include a labels dictionary
-def loadOldProject(taglab_working_dir, data):
-
-    project = Project()
-    map_filename = data["Map File"]
-
-    #convert to relative paths in case:
-    dir = QDir(taglab_working_dir)
-    map_filename = dir.relativeFilePath(map_filename)
-    image_name = os.path.basename(map_filename)
-    image_name = image_name[:-4]
-    image = Image(id=image_name)
-    image.map_px_to_mm_factor = data["Map Scale"]
-    image.acquisition_date = "1955-11-05"
-    channel = Channel(filename=map_filename, type="RGB")
-    image.channels.append(channel)
-
-    for blob_data in data["Segmentation Data"]:
-        blob = Blob(None, 0, 0, 0)
-        blob.fromDict(blob_data)
-        blob.setId(int(blob.id))  # id should be set again to update related info
-        image.annotations.addBlob(blob)
-
-    project.images.append(image)
-    return project
 
 class ProjectEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -238,8 +209,9 @@ class Project(object):
 
         class_names = set()  # class names effectively used
         for image in self.images:
-            for blob in image.annotations.seg_blobs:
-                class_names.add(blob.class_name)
+            for annotations in image.annotationLayers:
+                for blob in annotations.seg_blobs:
+                    class_names.add(blob.class_name)
 
         if len(class_names) == 0:
             return []

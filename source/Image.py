@@ -151,6 +151,14 @@ class Image(object):
             annotations.table_needs_update = False
             return df
 
+    @staticmethod
+    def create_data_table_empty():
+        '''
+        Creates an empty data table for the label panel
+        '''
+        df = pd.DataFrame({}, columns=['Id', 'Class', 'Area'])
+        return df
+
 
     def create_data_table(self, indexAnnotation):
         '''

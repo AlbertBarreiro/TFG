@@ -3048,6 +3048,7 @@ class TagLab(QMainWindow):
 
         # update labels widget
         self.updatePanelsWithoutAnnotations()
+        self.updatePanelsWithAnnotations()
 
         # redraw all blobs
         if self.viewerplus is not None:
@@ -3074,12 +3075,13 @@ class TagLab(QMainWindow):
             self.labels_widget.updateColor(newname, newcolor)
         else:
             # all the blobs need to be re-assigned
-            for blob in self.activeviewer.image.annotations.seg_blobs:
+            for blob in self.activeviewer.annotations.seg_blobs:
                 if blob.class_name == oldname:
                     self.activeviewer.setBlobClass(blob, newname)
 
         # update labels widget
         self.updatePanelsWithoutAnnotations()
+        self.updatePanelsWithAnnotations()
 
         # redraw all blobs
         if self.viewerplus is not None:
@@ -3094,7 +3096,7 @@ class TagLab(QMainWindow):
 
         labels_list = self.dictionary_widget.labels
 
-        for blob in self.activeviewer.image.annotations.seg_blobs:
+        for blob in self.activeviewer.annotations.seg_blobs:
             if blob.class_name == labelname:
               self.activeviewer.setBlobClass(blob, "Empty")
 
@@ -3103,6 +3105,7 @@ class TagLab(QMainWindow):
 
         # update labels widget
         self.updatePanelsWithoutAnnotations()
+        self.updatePanelsWithAnnotations()
 
         # redraw all blobs
         if self.viewerplus is not None:
@@ -3122,7 +3125,7 @@ class TagLab(QMainWindow):
 
     def updatePanelsWithoutAnnotations(self):
         """
-        Update panels that don't show annotation info (labels, layers, data panel, compare panel and map viewer)
+        Update panels that don't need annotation info (labels, layers, data panel, compare panel and map viewer)
         """
 
         if self.update_panels_flag is False:
@@ -3153,7 +3156,7 @@ class TagLab(QMainWindow):
         # update map viewer
         if self.mapviewer.isVisible():
             w = self.mapviewer.width()
-            thumb = self.activeviewer.pixmap.scaled(w, w, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            thumb = self.activeviewer.pixmap.scaled(w, w, Qt.KeepAspectRatio, Qt.SmoothTransformation) #TODO esto peta 
             self.mapviewer.setPixmap(thumb)
             self.mapviewer.setOpacity(0.5)
 
@@ -3364,7 +3367,7 @@ class TagLab(QMainWindow):
     @pyqtSlot(Image, Annotation, bool)
     def showAnnotations(self, image, annotations, enable):
         """
-        Show the annotation into the main view and update the map viewer accordingly.
+        Show the annotation into the main view.
         """
 
         try:
