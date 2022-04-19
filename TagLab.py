@@ -2993,7 +2993,9 @@ class TagLab(QMainWindow):
     def createDictionary(self):
 
         if self.dictionary_widget is None:
+
             self.dictionary_widget = QtDictionaryWidget(self.taglab_dir, self.project, parent = self)
+            self.dictionary_widget.loadlabels.connect(self.addLabelDictionary)
             self.dictionary_widget.addlabel.connect(self.addLabelDictionary)
             self.dictionary_widget.updatelabel[str,list,str,list].connect(self.updateLabelDictionary)
             self.dictionary_widget.deletelabel[str].connect(self.deleteLabelfromDictionary)
@@ -3003,9 +3005,16 @@ class TagLab(QMainWindow):
     @pyqtSlot()
     def createDecayLayer(self):
 
+        if self.activeviewer.image is None:
+            msgBox = QMessageBox()
+            msgBox.setWindowTitle(self.TAGLAB_VERSION)
+            msgBox.setText("Unable to create a decay layer since there is no map selected")
+            msgBox.exec()
+            return
+
         image = self.last_image_loaded
         image.addNewDecayLayer()
-        self.updateToolStatus()
+        #self.updateToolStatus()
         self.updateImageSelectionMenu()
 
 

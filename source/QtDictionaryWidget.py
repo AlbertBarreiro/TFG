@@ -35,6 +35,7 @@ class QtDictionaryWidget(QWidget):
 
     closewidget = pyqtSignal()
 
+    loadlabels = pyqtSignal()
     addlabel = pyqtSignal()
     deletelabel= pyqtSignal(str)
     updatelabel = pyqtSignal(str,list,str,list)
@@ -437,6 +438,7 @@ class QtDictionaryWidget(QWidget):
         tempWidget.setMinimumHeight(220)
         tempWidget.setLayout(self.labels_layout)
         self.scroll.setWidget(tempWidget)
+        self.loadlabels.emit()
 
 
     @pyqtSlot()

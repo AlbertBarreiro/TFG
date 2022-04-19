@@ -389,12 +389,12 @@ class Project(object):
         if self.correspondences is None:
             # create a new correspondences table
             self.correspondences = {}
-            self.correspondences[key] = Correspondences(self.images[img_source_idx], self.images[img_target_idx])
+            self.correspondences[key] = Correspondences(self.images[img_source_idx], self.images[img_target_idx]) # TODO arreglar
         else:
             corr = self.correspondences.get(key)
             if corr is None:
                 # create a new correspondences table
-                self.correspondences[key] = Correspondences(self.images[img_source_idx], self.images[img_target_idx])
+                self.correspondences[key] = Correspondences(self.images[img_source_idx], self.images[img_target_idx]) # TODO arreglar
 
         return self.correspondences[key]
 
