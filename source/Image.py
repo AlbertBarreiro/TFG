@@ -32,10 +32,11 @@ class Image(object):
         else:
             for annotations in annotationsList:
                 annotationFilled = Annotation()
-                for data in annotations:
+                for annotation_data in annotations:
                     blob = Blob(None, 0, 0, 0)
-                    blob.fromDict(data)
+                    blob.fromDict(annotation_data["blob"])
                     annotationFilled.addBlob(blob)
+                    annotationFilled.id = annotation_data["id"]
                 self.annotationLayers.append(annotationFilled)
 
         self.layers = []

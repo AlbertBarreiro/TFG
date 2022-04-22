@@ -44,8 +44,8 @@ class Correspondences(object):
         for index, row in self.data.iterrows():
             id1 = int(row['Blob1'])
             id2 = int(row['Blob2'])
-            blob1 = self.source.annotations.blobById(id1)
-            blob2 = self.target.annotations.blobById(id2)
+            blob1 = self.source_annotations.blobById(id1)
+            blob2 = self.target_annotations.blobById(id2)
 
             if blob1 is not None:
                 if blob1.genet is not None:
@@ -60,8 +60,8 @@ class Correspondences(object):
             id1 = int(row['Blob1'])
             id2 = int(row['Blob2'])
             action = row['Action']
-            blob1 = self.source.annotations.blobById(id1)
-            blob2 = self.target.annotations.blobById(id2)
+            blob1 = self.source_annotations.blobById(id1)
+            blob2 = self.target_annotations.blobById(id2)
 
             if blob1 is None and blob2 is None:
                 print("BOOM")
@@ -98,8 +98,8 @@ class Correspondences(object):
         for index, row in self.data.iterrows():
             id1 = int(row['Blob1'])
             id2 = int(row['Blob2'])
-            blob1 = self.source.annotations.blobById(id1)
-            blob2 = self.target.annotations.blobById(id2)
+            blob1 = self.source_annotations.blobById(id1)
+            blob2 = self.target_annotations.blobById(id2)
             if blob1 is not None:
                 self.data.loc[index, 'Area1'] = self.area_in_sq_cm(blob1.area, True)
             if blob2 is not None:
@@ -122,8 +122,8 @@ class Correspondences(object):
         for index, row in current_table.iterrows():
             id1 = int(row['Blob1'])
             id2 = int(row['Blob2'])
-            blob1 = self.source.annotations.blobById(id1)
-            blob2 = self.target.annotations.blobById(id2)
+            blob1 = self.source_annotations.blobById(id1)
+            blob2 = self.target_annotations.blobById(id2)
 
             if blob1 is None and blob2 is None:
                 self.data.drop(index, inplace=True)
@@ -227,7 +227,7 @@ class Correspondences(object):
             relatives = self.data[self.data['Blob2'] == id]
             if len(relatives):
                 continue
-            target = self.target.annotations.blobById(id)
+            target = self.target_annotations.blobById(id)
             row = [-1, -1, target.id, 0.0, self.area_in_sq_cm(target.area, False), target.class_name, "born", type]
             df = pd.DataFrame([row], columns=self.data.columns)
             self.data = self.data.append(df)
@@ -334,13 +334,13 @@ class Correspondences(object):
         count = len(self.data.index)
 
         for i in set(dead):
-            blob = self.source.annotations.blobById(i)
+            blob = self.source_annotations.blobById(i)
             row = [-1, blob.id, -1, self.area_in_sq_cm(blob.area, True), 0.0, blob.class_name, "dead", "none"]
             df = pd.DataFrame([row], columns=self.data.columns)
             self.data = self.data.append(df)
 
         for i in set(born):
-            blob = self.target.annotations.blobById(i)
+            blob = self.target_annotations.blobById(i)
             row = [-1, -1, blob.id, 0.0, self.area_in_sq_cm(blob.area, False), blob.class_name, "dead", "none"]
             df = pd.DataFrame([row], columns=self.data.columns)
             self.data = self.data.append(df)

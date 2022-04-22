@@ -33,6 +33,7 @@ from skimage.draw import polygon_perimeter
 
 from source import utils
 
+import uuid
 import pandas as pd
 from scipy import ndimage as ndi
 from skimage.morphology import watershed, binary_dilation, binary_erosion
@@ -58,7 +59,8 @@ class Annotation(QObject):
         #refactor: rename this to blobs.
         # list of all blobs
         self.seg_blobs = []
-
+        self.id = str(uuid.uuid4())
+        
         #relative weight of depth map for refine borders
         #refactor: this is to be saved and loaded in qsettings
         self.refine_depth_weight = 0.0
@@ -68,6 +70,7 @@ class Annotation(QObject):
         self.table_needs_update = True
         self.cache_data_table = None
         self.cache_labels_table = None
+
     def addBlob(self, blob, notify=True):
         used = [blob.id for blob in self.seg_blobs]
         if blob.id in used:

@@ -114,13 +114,17 @@ class QtLayersWidget(QTreeWidget):
         self.blockSignals(True)
         it = QTreeWidgetItemIterator(self)
         while it.value():
+            imgWasChecked = False
             item = it.value()
             if item.type == 'image':
                 if item.image == image1 or item.image == image2:
-                    item.setIcon(0, self.icon_eyeopen)
-                    item.setCheckState(0, Qt.Checked)
-                    if len(item.image.layers):
-                        item.setExpanded(True)
+                    if item.checkState(0) != Qt.Checked: # if it was checked leave it as before
+                        item.setIcon(0, self.icon_eyeopen)
+                        item.setCheckState(0, Qt.Checked)
+                        if len(item.image.layers):
+                            item.setExpanded(True)
+                    else:
+                        imgWasChecked = True
                 else:
                     item.setIcon(0, self.icon_eyeclosed)
                     item.setCheckState(0, Qt.Unchecked)
@@ -137,7 +141,9 @@ class QtLayersWidget(QTreeWidget):
                         child.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
                     else:
                         child.setFlags(Qt.NoItemFlags) #Qt.ItemIsEnabled)
-                    child.setCheckState(0, Qt.Unchecked)
+
+                    if not imgWasChecked:
+                        child.setCheckState(0, Qt.Unchecked)
 
             it += 1
 

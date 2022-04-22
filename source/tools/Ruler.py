@@ -81,9 +81,13 @@ class Ruler(Tool):
         y1 = points[0][1]
         x2 = points[1][0]
         y2 = points[1][1]
+        
+        blob1 = None
+        blob2 = None
 
-        blob1 = annotations.clickedBlob(x1, y1)
-        blob2 = annotations.clickedBlob(x2, y2)
+        if annotations is not None:
+            blob1 = annotations.clickedBlob(x1, y1)
+            blob2 = annotations.clickedBlob(x2, y2)
 
         if blob1 is not None and blob2 is not None and blob1 is not blob2:
 

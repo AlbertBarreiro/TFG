@@ -378,23 +378,24 @@ class Project(object):
                 return img
         return None
 
-    def getImagePairCorrespondences(self, img_source_idx, img_target_idx):
+    def getImagePairCorrespondences(self, sourceImg, source_annotation, targetImg, target_annotation):
         """
         Given two image indices returns the current correspondences table or create a new one.
         Note that the correspondences between the image A and the image B are not the same of
         the image B and A.
         """
-        key = self.images[img_source_idx].id + "-" + self.images[img_target_idx].id
-
+        
+        key = sourceImg.id + "_" + source_annotation.id + "-" + targetImg.id + "_" + target_annotation.id
+        print("key: ", key)
         if self.correspondences is None:
             # create a new correspondences table
             self.correspondences = {}
-            self.correspondences[key] = Correspondences(self.images[img_source_idx], self.images[img_target_idx]) # TODO arreglar
+            self.correspondences[key] = Correspondences(sourceImg, source_annotation, targetImg, target_annotation)
         else:
             corr = self.correspondences.get(key)
             if corr is None:
                 # create a new correspondences table
-                self.correspondences[key] = Correspondences(self.images[img_source_idx], self.images[img_target_idx]) # TODO arreglar
+                self.correspondences[key] = Correspondences(sourceImg, source_annotation, targetImg, target_annotation)
 
         return self.correspondences[key]
 

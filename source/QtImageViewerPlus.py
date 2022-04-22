@@ -24,7 +24,7 @@
 import os.path
 from PyQt5.QtCore import Qt, QPoint, QPointF, QRectF, QFileInfo, QDir, pyqtSlot, pyqtSignal, QT_VERSION_STR
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPainterPath, QPen, QColor, QFont, QBrush
-from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QFileDialog, QGraphicsItem, QGraphicsSimpleTextItem, QPlainTextEdit,QSizePolicy
+from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QFileDialog, QGraphicsItem, QGraphicsSimpleTextItem, QPlainTextEdit,QSizePolicy,QMessageBox
 
 from source.Undo import Undo
 from source.Project import Project
@@ -121,7 +121,7 @@ class QtImageViewerPlus(QtImageViewer):
         self.project = Project()
         self.image = None
         self.channel = None
-        self.annotations = Annotation()
+        self.annotations = None
         self.layers = []
         self.selected_blobs = []
         self.taglab_dir = taglab_dir
@@ -204,10 +204,6 @@ class QtImageViewerPlus(QtImageViewer):
         #clear existing layers
 
 
-        # draw all the annotations
-        #for blob in self.annotations.seg_blobs:
-        #    self.drawBlob(blob)
-
         # draw the layers
         self.drawAllLayers()
 
@@ -227,11 +223,12 @@ class QtImageViewerPlus(QtImageViewer):
         self.annotations = annotations
 
     def toggleAnnotations(self, enable):
-        for blob in self.annotations.seg_blobs:
-            if enable:
-                self.drawBlob(blob)
-            else:
-                self.undrawBlob(blob)
+        if self.annotations is not None:
+            for blob in self.annotations.seg_blobs:
+                if enable:
+                    self.drawBlob(blob)
+                else:
+                    self.undrawBlob(blob)
 
 
     def updateImageProperties(self):
@@ -294,9 +291,10 @@ class QtImageViewerPlus(QtImageViewer):
         self.undrawAllLayers()
 
         # undraw all blobs
-        for blob in self.annotations.seg_blobs:
-            self.undrawBlob(blob)
-            del blob
+        if self.annotations is not None:
+            for blob in self.annotations.seg_blobs:
+                self.undrawBlob(blob)
+                del blob
 
         # clear working area
         if self.working_area_rect is not None:
@@ -310,7 +308,7 @@ class QtImageViewerPlus(QtImageViewer):
         self.channel = None
 
         # clear annotation data
-        self.annotations = Annotation()
+        self.annotations = None
 
         # no project is set
         self.project = None
@@ -413,21 +411,21 @@ class QtImageViewerPlus(QtImageViewer):
             self.showGrid()
 
     def enableFill(self):
+        if self.annotations is not None:
+            for blob in self.annotations.seg_blobs:
+                brush = self.project.classBrushFromName(blob)
+                if blob.qpath_gitem is not None:
+                    blob.qpath_gitem.setBrush(brush)
 
-        for blob in self.annotations.seg_blobs:
-            brush = self.project.classBrushFromName(blob)
-            if blob.qpath_gitem is not None:
-                blob.qpath_gitem.setBrush(brush)
-
-        self.fill_enabled = True
+            self.fill_enabled = True
 
     def disableFill(self):
+        if self.annotations is not None:
+            for blob in self.annotations.seg_blobs:
+                if blob.qpath_gitem is not None:
+                    blob.qpath_gitem.setBrush(QBrush(Qt.NoBrush))
 
-        for blob in self.annotations.seg_blobs:
-            if blob.qpath_gitem is not None:
-                blob.qpath_gitem.setBrush(QBrush(Qt.NoBrush))
-
-        self.fill_enabled = False
+            self.fill_enabled = False
 
     @pyqtSlot(int)
     def toggleFill(self, checked):
@@ -438,19 +436,19 @@ class QtImageViewerPlus(QtImageViewer):
             self.enableFill()
 
     def enableBorders(self):
-
-        for blob in self.annotations.seg_blobs:
-            pen = self.border_selected_pen if blob in self.selected_blobs else self.border_pen
-            if blob.qpath_gitem is not None:
-                blob.qpath_gitem.setPen(pen)
+        if self.annotations is not None:
+            for blob in self.annotations.seg_blobs:
+                pen = self.border_selected_pen if blob in self.selected_blobs else self.border_pen
+                if blob.qpath_gitem is not None:
+                    blob.qpath_gitem.setPen(pen)
 
         self.border_enabled = True
 
     def disableBorders(self):
-
-        for blob in self.annotations.seg_blobs:
-            if blob.qpath_gitem is not None:
-                blob.qpath_gitem.setPen(QPen(Qt.NoPen))
+        if self.annotations is not None:
+            for blob in self.annotations.seg_blobs:
+                if blob.qpath_gitem is not None:
+                    blob.qpath_gitem.setPen(QPen(Qt.NoPen))
 
         self.border_enabled = False
 
@@ -463,20 +461,20 @@ class QtImageViewerPlus(QtImageViewer):
             self.enableBorders()
 
     def enableIds(self):
+        if self.annotations is not None:
+            for blob in self.annotations.seg_blobs:
+                if blob.id_item is not None:
+                    blob.id_item.setVisible(True)
 
-        for blob in self.annotations.seg_blobs:
-            if blob.id_item is not None:
-                blob.id_item.setVisible(True)
-
-        self.ids_enabled = True
+            self.ids_enabled = True
 
     def disableIds(self):
+        if self.annotations is not None:
+            for blob in self.annotations.seg_blobs:
+                if blob.id_item is not None:
+                    blob.id_item.setVisible(False)
 
-        for blob in self.annotations.seg_blobs:
-            if blob.id_item is not None:
-                blob.id_item.setVisible(False)
-
-        self.ids_enabled = False
+            self.ids_enabled = False
 
     @pyqtSlot(int)
     def toggleIds(self, checked):
@@ -605,13 +603,14 @@ class QtImageViewerPlus(QtImageViewer):
     def applyTransparency(self, value):
         self.transparency_value = 1.0 - (value / 100.0)
         # current annotations
-        for blob in self.annotations.seg_blobs:
-            blob.qpath_gitem.setOpacity(self.transparency_value)
+        if self.annotations is not None:
+            for blob in self.annotations.seg_blobs:
+                blob.qpath_gitem.setOpacity(self.transparency_value)
 
     def redrawAllBlobs(self):
-
-        for blob in self.annotations.seg_blobs:
-            self.drawBlob(blob)
+        if self.annotations is not None: 
+            for blob in self.annotations.seg_blobs:
+                self.drawBlob(blob)
 
     #used for crossair cursor
     def drawForeground(self, painter, rect):
@@ -727,6 +726,14 @@ class QtImageViewerPlus(QtImageViewer):
     def mousePressEvent(self, event):
         """ Start mouse pan or zoom mode.
         """
+        if self.annotations == None and self.tools.tool not in {"MOVE", "RULER"} :
+            msgBox = QMessageBox()
+            msgBox.setWindowTitle("TagLab")
+            msgBox.setText("Unable to use the tool since there is no map selected")
+            msgBox.exec()
+            return
+
+
         self.activated.emit()
 
         scenePos = self.mapToScene(event.pos())
@@ -922,15 +929,16 @@ class QtImageViewerPlus(QtImageViewer):
         sx = self.dragSelectionStart[0]
         sy = self.dragSelectionStart[1]
         self.resetSelection()
-        for blob in self.annotations.seg_blobs:
-            visible = self.project.isLabelVisible(blob.class_name)
-            if not visible:
-                continue
-            box = blob.bbox
+        if self.annotations is not None:
+            for blob in self.annotations.seg_blobs:
+                visible = self.project.isLabelVisible(blob.class_name)
+                if not visible:
+                    continue
+                box = blob.bbox
 
-            if sx > box[1] or sy > box[0] or x < box[1] + box[2] or y < box[0] + box[3]:
-                continue
-            self.addToSelectedList(blob)
+                if sx > box[1] or sy > box[0] or x < box[1] + box[2] or y < box[0] + box[3]:
+                    continue
+                self.addToSelectedList(blob)
 
     @pyqtSlot(str)
     def setActiveLabel(self, label):
@@ -956,9 +964,9 @@ class QtImageViewerPlus(QtImageViewer):
             g = int(color_components[1])
             b = int(color_components[2])
             self.border_pen.setColor(QColor(r, g, b))
-
-            for blob in self.annotations.seg_blobs:
-                blob.qpath_gitem.setPen(self.border_pen)
+            if self.annotations is not None:
+                for blob in self.annotations.seg_blobs:
+                    blob.qpath_gitem.setPen(self.border_pen)
 
     @pyqtSlot(str, int)
     def setSelectionPen(self, color, thickness):
@@ -999,10 +1007,10 @@ class QtImageViewerPlus(QtImageViewer):
             blob.id_item.setVisible(visibility)
 
     def updateVisibility(self):
-
-        for blob in self.annotations.seg_blobs:
-            visibility = self.project.isLabelVisible(blob.class_name)
-            self.setBlobVisible(blob, visibility)
+        if self.annotations is not None:
+            for blob in self.annotations.seg_blobs:
+                visibility = self.project.isLabelVisible(blob.class_name)
+                self.setBlobVisible(blob, visibility)
 
 
 

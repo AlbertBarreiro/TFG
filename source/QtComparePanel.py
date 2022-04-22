@@ -313,8 +313,6 @@ height: 0px;
 
         self.project = None
         self.correspondences = None
-        self.img1idx = -1
-        self.img2idx = -1
         self.sourceImg = None
         self.targetImg = None
         self.sortfilter = None
@@ -339,25 +337,26 @@ height: 0px;
         viewer = self.sender()
         action = menu.exec_(viewer.mapToGlobal(position))
 
-    def setTable(self, project, img1idx, img2idx):
+    def setTable(self, project, sourceImg, annotation1, targetImg, annotation2):
 
         self.project = project
-        self.img1idx = img1idx
-        self.img2idx = img2idx
-        self.sourceImg = project.images[img1idx]
-        self.targetImg = project.images[img2idx]
 
-        self.correspondences = project.getImagePairCorrespondences(img1idx, img2idx)
+        self.sourceImg = sourceImg
+        self.targetImg = targetImg
+        self.sourceAnnotation = annotation1
+        self.targetAnnotation = annotation2
+
+        self.correspondences = project.getImagePairCorrespondences(self.sourceImg, self.sourceAnnotation, self.targetImg, self.targetAnnotation)
         self.correspondences.updateAreas()
         self.data = self.correspondences.data
 
         try:
-            self.sourceImg.annotations.blobUpdated.connect(self.sourceBlobUpdated, type=Qt.UniqueConnection)
+            self.sourceAnnotation.blobUpdated.connect(self.sourceBlobUpdated, type=Qt.UniqueConnection)
         except:
             pass
 
         try:
-            self.targetImg.annotations.blobUpdated.connect(self.targetBlobUpdated, type=Qt.UniqueConnection)
+            self.targetAnnotation.blobUpdated.connect(self.targetBlobUpdated, type=Qt.UniqueConnection)
         except:
             pass
 
@@ -440,7 +439,7 @@ height: 0px;
         except:
             return
 
-        corr = self.project.getImagePairCorrespondences(self.img1idx, self.img2idx)
+        corr = self.project.getImagePairCorrespondences(self.sourceImg, self.sourceAnnotation, self.targetImg, self.targetAnnotation)
         sourcecluster, targetcluster, rows = corr.findCluster(blobid, isSource)
         self.selectRows(rows)
 

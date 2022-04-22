@@ -133,10 +133,10 @@ class TagLab(QMainWindow):
 
         self.setStyleSheet("background-color: rgb(55,55,55); color: white")
 
-        current_version, need_to_update = self.checkNewVersion()
-        if need_to_update:
-            print("New version available. Please, launch update.py")
-            sys.exit(0)
+        current_version, _ = self.checkNewVersion()
+        #if need_to_update:
+        #    print("New version available. Please, launch update.py")
+        #   sys.exit(0)
 
         ##### DATA INITIALIZATION AND SETUP #####
 
@@ -420,7 +420,7 @@ class TagLab(QMainWindow):
         # LAYERS PANEL
 
         self.layers_widget = QtLayersWidget()
-        self.layers_widget.setProject(self.project)
+        #self.layers_widget.setProject(self.project)
         self.layers_widget.showImage.connect(self.showImage)
         self.layers_widget.toggleLayer.connect(self.toggleLayer)
         self.layers_widget.showAnnotations.connect(self.showAnnotations)
@@ -1779,14 +1779,6 @@ class TagLab(QMainWindow):
             self.datadock.setWindowTitle("Comparison Table")
             self.updatePanelsWithoutAnnotations()
 
-            # test
-
-            dict = { "Pocillopora": 2, "Pocil": 3 }
-
-            json_string = json.dumps(dict)
-
-            print(json_string)
-
 
 
     def createMatch(self):
@@ -2991,16 +2983,28 @@ class TagLab(QMainWindow):
 
     @pyqtSlot()
     def createDictionary(self):
+        showMessage = False
+        message = ""
+        if self.activeviewer.image is None:    
+            message = "Unable to add a dictionary since there is no map selected"
+            showMessage = True
+        elif self.activeviewer.annotations is None:   
+            message = "Unable to add a dictionary since there is no annotation selected"
+            showMessage = True
+        if showMessage:
+            msgBox = QMessageBox()
+            msgBox.setWindowTitle(self.TAGLAB_VERSION)
+            msgBox.setText(message)
+            msgBox.exec()
+            return 
 
-        if self.dictionary_widget is None:
-
-            self.dictionary_widget = QtDictionaryWidget(self.taglab_dir, self.project, parent = self)
-            self.dictionary_widget.loadlabels.connect(self.addLabelDictionary)
-            self.dictionary_widget.addlabel.connect(self.addLabelDictionary)
-            self.dictionary_widget.updatelabel[str,list,str,list].connect(self.updateLabelDictionary)
-            self.dictionary_widget.deletelabel[str].connect(self.deleteLabelfromDictionary)
-            self.dictionary_widget.closewidget.connect(self.closeDictionaryWidget)
-            self.dictionary_widget.show()
+        self.dictionary_widget = QtDictionaryWidget(self.taglab_dir, self.project, parent = self)
+        self.dictionary_widget.loadlabels.connect(self.addLabelDictionary)
+        self.dictionary_widget.addlabel.connect(self.addLabelDictionary)
+        self.dictionary_widget.updatelabel[str,list,str,list].connect(self.updateLabelDictionary)
+        self.dictionary_widget.deletelabel[str].connect(self.deleteLabelfromDictionary)
+        self.dictionary_widget.closewidget.connect(self.closeDictionaryWidget)
+        self.dictionary_widget.show()
 
     @pyqtSlot()
     def createDecayLayer(self):
@@ -3152,15 +3156,8 @@ class TagLab(QMainWindow):
             self.layers_widget.setProject(self.project)
             self.layers_widget.setImage(image)
         else:
-            self.layers_widget.setProject(self.project)
+            #self.layers_widget.setProject(self.project)
             self.layers_widget.setImage(self.viewerplus.image, self.viewerplus2.image)
-
-        if self.split_screen_flag is True:
-            # update compare panel (only if it is visible)
-            index1 = self.comboboxSourceImage.currentIndex()
-            index2 = self.comboboxTargetImage.currentIndex()
-            if self.compare_panel.isVisible():
-                self.compare_panel.setTable(self.project, index1, index2)
 
         # update map viewer
         if self.mapviewer.isVisible():
@@ -3175,18 +3172,30 @@ class TagLab(QMainWindow):
 
 
 
-    def updatePanelsWithAnnotations(self):
-        # update labels
+    def updatePanelsWithAnnotations(self, viewerChanged = None):
+
         image = None
-        if self.activeviewer is not None:
+        if viewerChanged is not None:
             if self.activeviewer.image is not None:
                 image = self.activeviewer.image
 
-        # update labels
+
         annotations = None
-        if self.activeviewer is not None:
+        if viewerChanged is not None:
             if self.activeviewer.annotations is not None:
                 annotations = self.activeviewer.annotations
+
+
+        if self.split_screen_flag is True and self.viewerplus.annotations is not None and self.viewerplus2.annotations is not None:
+
+            # update compare panel (only if it is visible)
+            index1 = self.comboboxSourceImage.currentIndex()
+            index2 = self.comboboxTargetImage.currentIndex()
+            if self.compare_panel.isVisible():
+                source_image = self.project.images[index1]
+                target_image = self.project.images[index2]
+                self.compare_panel.setTable(self.project, source_image, self.viewerplus.annotations, target_image, self.viewerplus2.annotations)
+
 
 
         self.labels_widget.setLabels(self.project, image, annotations)
@@ -3232,9 +3241,9 @@ class TagLab(QMainWindow):
 
         # add an image and its annotation to the project
         self.project.addNewImage(image)
-        self.updateToolStatus() # TODO quizá se debería activar con las anotaciones
+        self.updateToolStatus()
         self.updateImageSelectionMenu()
-        self.layers_widget.setProject(self.project)
+        #self.layers_widget.setProject(self.project)  # it's already set inside showImage
         self.mapWidget.close()
         self.showImage(image)
 
@@ -3254,6 +3263,14 @@ class TagLab(QMainWindow):
                 self.activeviewer.showScalebar()
             else:
                 self.activeviewer.hideScalebar()
+
+
+    @pyqtSlot()
+    def updateToolStatusAnnotations(self, enable):
+        for button in [self.btnMove, self.btnAssign, self.btnEditBorder, self.btnCut, self.btnFreehand,
+                       self.btnCreateCrack, self.btnWatershed, self.btnBricksSegmentation, self.btnRuler, self.btnDeepExtreme,
+                       self.btnRitm, self.btnAutoClassification, self.btnCreateGrid, self.btnGrid]:
+            button.setEnabled(enable)
 
     @pyqtSlot(float)
     def updateMapScale(self, value):
@@ -3381,17 +3398,25 @@ class TagLab(QMainWindow):
 
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
+            viewerChanged = None
 
-            if self.last_annotation_loaded != annotations:
+            if self.viewerplus.image == image:
+                viewerChanged = self.viewerplus
+
+            if self.viewerplus2.image == image:
+                viewerChanged = self.viewerplus2
+
+
+            if viewerChanged.annotations != annotations:
+
                 self.toggleAnnotations(image, False)
 
-                self.last_annotation_loaded = annotations
-
-                self.viewerplus.setAnnotations(annotations)
-                self.toggleAnnotations(image, enable) # first need to activate blobs
-                self.updatePanelsWithAnnotations()
-            else:
-               self.toggleAnnotations(image, enable)
+                viewerChanged.setAnnotations(annotations)
+                self.toggleAnnotations(image, enable) # need to activate blobs first
+                self.updatePanelsWithAnnotations(viewerChanged)
+            elif not enable:
+                self.toggleAnnotations(image, False)
+                viewerChanged.setAnnotations(None)
 
 
         except Exception as e:
@@ -4346,6 +4371,13 @@ class TagLab(QMainWindow):
         if self.activeviewer.image is None:
             self.move()
             return
+
+        if self.activeviewer.annotations is None:      
+            msgBox = QMessageBox()
+            msgBox.setWindowTitle(self.TAGLAB_VERSION)
+            msgBox.setText("Unable to use the tool since there is no annotation selected")
+            msgBox.exec()
+            return 
 
         if self.available_classifiers == "None":
             self.btnAutoClassification.setChecked(False)

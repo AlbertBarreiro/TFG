@@ -142,7 +142,7 @@ class Ritm(Tool):
         w = self.work_area_bbox[2]
         h = self.work_area_bbox[3]
         self.work_area_mask = np.zeros((h,w), dtype=np.int32)
-        for blob in self.viewerplus.image.annotations.seg_blobs:
+        for blob in self.viewerplus.annotations.seg_blobs:
             if checkIntersection(self.work_area_bbox, blob.bbox):
                 mask = blob.getMask()
                 paintMask(self.work_area_mask, self.work_area_bbox, mask, blob.bbox, 1)
