@@ -3235,7 +3235,7 @@ class TagLab(QMainWindow):
         except Exception as e:
             msgBox = QMessageBox()
             msgBox.setWindowTitle(self.TAGLAB_VERSION)
-            msgBox.setText("Error creating map:" + str(e))
+            msgBox.setText("Error creating map: " + str(e))
             msgBox.exec()
             return
 
@@ -3318,7 +3318,7 @@ class TagLab(QMainWindow):
         except Exception as e:
             msgBox = QMessageBox()
             msgBox.setWindowTitle(self.TAGLAB_VERSION)
-            msgBox.setText("Error creating map:" + str(e))
+            msgBox.setText("Error creating map: " + str(e))
             msgBox.exec()
             return
 
@@ -3385,7 +3385,7 @@ class TagLab(QMainWindow):
         except Exception as e:
             msgBox = QMessageBox()
             msgBox.setWindowTitle(self.TAGLAB_VERSION)
-            msgBox.setText("Error loading map:" + str(e))
+            msgBox.setText("Error loading map: " + str(e))
             msgBox.exec()
         finally:
             QApplication.restoreOverrideCursor()
@@ -3422,7 +3422,7 @@ class TagLab(QMainWindow):
         except Exception as e:
             msgBox = QMessageBox()
             msgBox.setWindowTitle(self.TAGLAB_VERSION)
-            msgBox.setText("Error loading annotation:" + str(e))
+            msgBox.setText("Error loading annotation: " + str(e))
             msgBox.exec()
         finally:
             QApplication.restoreOverrideCursor()
