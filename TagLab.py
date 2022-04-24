@@ -3060,8 +3060,8 @@ class TagLab(QMainWindow):
         self.project.setDictionaryFromListOfLabels(labels_list)
 
         # update labels widget
-        self.updatePanelsWithoutAnnotations()
-        self.updatePanelsWithAnnotations()
+        #self.updatePanelsWithoutAnnotations()
+        self.updatePanelsWithAnnotations(self.activeviewer)
 
         # redraw all blobs
         if self.viewerplus is not None:
@@ -3093,8 +3093,8 @@ class TagLab(QMainWindow):
                     self.activeviewer.setBlobClass(blob, newname)
 
         # update labels widget
-        self.updatePanelsWithoutAnnotations()
-        self.updatePanelsWithAnnotations()
+        #self.updatePanelsWithoutAnnotations()
+        self.updatePanelsWithAnnotations(self.activeviewer)
 
         # redraw all blobs
         if self.viewerplus is not None:
@@ -3117,8 +3117,8 @@ class TagLab(QMainWindow):
         self.project.setDictionaryFromListOfLabels(labels_list)
 
         # update labels widget
-        self.updatePanelsWithoutAnnotations()
-        self.updatePanelsWithAnnotations()
+        #self.updatePanelsWithoutAnnotations()
+        self.updatePanelsWithAnnotations(self.activeviewer)
 
         # redraw all blobs
         if self.viewerplus is not None:
