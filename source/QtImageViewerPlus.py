@@ -627,8 +627,8 @@ class QtImageViewerPlus(QtImageViewer):
 
     def setTool(self, tool):
 
-        if not self.isVisible():
-            return
+        #if not self.isVisible():
+        #    return
 
         QApplication.setOverrideCursor(Qt.ArrowCursor)
 
@@ -688,9 +688,12 @@ class QtImageViewerPlus(QtImageViewer):
 
         if self.tools.tool in ["RULER"]:
             return
+        if self.annotations is None:
+            return
 
         if not (Qt.ShiftModifier & QApplication.queryKeyboardModifiers()):
             self.resetSelection()
+
 
         selected_blob = self.annotations.clickedBlob(x, y)
 

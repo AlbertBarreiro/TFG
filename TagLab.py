@@ -1688,6 +1688,7 @@ class TagLab(QMainWindow):
                 self.setTool("MOVE")
 
         self.viewerplus2.hide()
+        #self.viewerplus2.clear()
 
         self.compare_panel.hide()
         self.data_panel.show()
@@ -1720,8 +1721,11 @@ class TagLab(QMainWindow):
             return
 
         if len(self.project.images) > 1:
-
+            
             QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            source_annotations = None
+            target_annotations = None
 
             self.viewerplus.viewChanged()
 
@@ -1740,21 +1744,27 @@ class TagLab(QMainWindow):
             self.comboboxSourceImage.setCurrentIndex(index_to_set)
             self.comboboxTargetImage.setCurrentIndex(index_to_set + 1)
 
+            if self.viewerplus.image == self.project.images[index_to_set]:
+                source_annotations = self.viewerplus.annotations
+            elif self.viewerplus.image == self.project.images[index_to_set+1]:
+                target_annotations = self.viewerplus.annotations
+            
             self.doNotUpdatePanels()
             self.viewerplus.clear()
             self.viewerplus.setProject(self.project)
             self.viewerplus.setImage(self.project.images[index_to_set])
+            self.viewerplus.setAnnotations(source_annotations)
+
             self.viewerplus2.clear()
             self.viewerplus2.setProject(self.project)
             self.viewerplus2.setImage(self.project.images[index_to_set + 1])
+            self.viewerplus2.setAnnotations(target_annotations)
             self.setBlobVisualization()
 
             self.doUpdatePanels()
 
             self.comboboxSourceImage.currentIndexChanged.connect(self.sourceImageChanged)
             self.comboboxTargetImage.currentIndexChanged.connect(self.targetImageChanged)
-
-            QApplication.restoreOverrideCursor()
 
             self.viewerplus2.show()
             self.comboboxTargetImage.show()
@@ -1774,10 +1784,18 @@ class TagLab(QMainWindow):
 
             self.activeviewer = self.viewerplus
 
+            if self.viewerplus.annotations is not None: # annotation panels already activated, just need to print blobs
+                self.showAnnotations(self.viewerplus.image, self.viewerplus.annotations, True) 
+            elif self.viewerplus2.annotations is not None:
+                self.showAnnotations(self.viewerplus2.image, self.viewerplus2.annotations, True)
+
+
             self.compare_panel.show()
             self.data_panel.hide()
             self.datadock.setWindowTitle("Comparison Table")
             self.updatePanelsWithoutAnnotations()
+
+            QApplication.restoreOverrideCursor()
 
 
 
@@ -1804,7 +1822,11 @@ class TagLab(QMainWindow):
             if self.compare_panel.correspondences is None:
                 self.compare_panel.setTable(self.project, img_source_index, img_target_index)
             else:
-                corr = self.project.getImagePairCorrespondences(img_source_index, img_target_index)
+                source_image = self.project.images[img_source_index]
+                target_image = self.project.images[img_target_index]
+
+                corr = self.project.getImagePairCorrespondences(source_image, self.viewerplus.annotations, target_image, self.viewerplus2.annotations)
+
                 self.compare_panel.updateTable(corr)
 
             # highlight the correspondences just added and show it by scroll
@@ -1864,7 +1886,11 @@ class TagLab(QMainWindow):
 
         img_source_index = self.comboboxSourceImage.currentIndex()
         img_target_index = self.comboboxTargetImage.currentIndex()
-        corr = self.project.getImagePairCorrespondences(img_source_index, img_target_index)
+
+        source_image = self.project.images[img_source_index]
+        target_image = self.project.images[img_target_index]
+
+        corr = self.project.getImagePairCorrespondences(source_image, self.viewerplus.annotations, target_image, self.viewerplus2.annotations)
         index = self.compare_panel.sortfilter.mapToSource(indexes[0]);
         row = corr.data.iloc[index.row()]
         blob1id = row['Blob1']
@@ -1889,7 +1915,12 @@ class TagLab(QMainWindow):
 
         img_source_index = self.comboboxSourceImage.currentIndex()
         img_target_index = self.comboboxTargetImage.currentIndex()
-        corr = self.project.getImagePairCorrespondences(img_source_index, img_target_index)
+
+        source_image = self.project.images[img_source_index]
+        target_image = self.project.images[img_target_index]
+
+        corr = self.project.getImagePairCorrespondences(source_image, self.viewerplus.annotations, target_image, self.viewerplus2.annotations)
+
         corr.deleteCluster(indexes)
 
         self.viewerplus.resetSelection()
@@ -1929,8 +1960,14 @@ class TagLab(QMainWindow):
 
     def showCluster(self, blobid, is_source, center):
 
-        corr = self.project.getImagePairCorrespondences(self.comboboxSourceImage.currentIndex(),
-                                                        self.comboboxTargetImage.currentIndex())
+        img_source_index = self.comboboxSourceImage.currentIndex()
+        img_target_index = self.comboboxTargetImage.currentIndex()
+
+        source_image = self.project.images[img_source_index]
+        target_image = self.project.images[img_target_index]
+
+        corr = self.project.getImagePairCorrespondences(source_image, self.viewerplus.annotations, target_image, self.viewerplus2.annotations)
+
         sourcecluster, targetcluster, rows = corr.findCluster(blobid, is_source)
 
         self.viewerplus.resetSelection()
@@ -1980,7 +2017,12 @@ class TagLab(QMainWindow):
 
             img_source_index = self.comboboxSourceImage.currentIndex()
             img_target_index = self.comboboxTargetImage.currentIndex()
-            correspondences = self.project.getImagePairCorrespondences(img_source_index, img_target_index)
+
+            source_image = self.project.images[img_source_index]
+            target_image = self.project.images[img_target_index]
+
+            correspondences = self.project.getImagePairCorrespondences(source_image, self.viewerplus.annotations, target_image, self.viewerplus2.annotations)
+
             data = correspondences.data
             selection = data.loc[data["Action"] == type]
             sourceblobs = selection['Blob1'].tolist()
@@ -2001,7 +2043,12 @@ class TagLab(QMainWindow):
         if self.activeviewer.tools.tool == "MATCH":
             img_source_index = self.comboboxSourceImage.currentIndex()
             img_target_index = self.comboboxTargetImage.currentIndex()
-            correspondences = self.project.getImagePairCorrespondences(img_source_index, img_target_index)
+
+            source_image = self.project.images[img_source_index]
+            target_image = self.project.images[img_target_index]
+
+            correspondences = self.project.getImagePairCorrespondences(source_image, self.viewerplus.annotations, target_image, self.viewerplus2.annotations)
+
 
             if type == "surface area":
                 correspondences.updateAreas(use_surface_area=True)
@@ -2098,26 +2145,41 @@ class TagLab(QMainWindow):
         N = len(self.project.images)
         if index1 == -1 or index1 >= N:
             return
-
+        swapped = False
         image = self.project.images[index1]
+        previous_image = self.viewerplus.image
+        previous_annotations = self.viewerplus.annotations
+        previous_anotations2 = None
         self.viewerplus.clear()
         self.btnGrid.setChecked(False)
 
         # target and source image cannot be the same !!
         index2 = self.comboboxTargetImage.currentIndex()
         if index1 == index2:
-            index2 = (index1 + 1) % N
+            swapped = True
+            index2 = self.project.getIndexFromImage(previous_image)
+            previous_anotations2 = self.viewerplus2.annotations
 
             self.doNotUpdatePanels()
             self.viewerplus2.clear()
             self.viewerplus2.setProject(self.project)
             self.viewerplus2.setImage(self.project.images[index2])
+            self.viewerplus2.setAnnotations(previous_annotations)
             self.doUpdatePanels()
 
             self.updateComboboxTargetImage(index2)
 
         self.viewerplus.setProject(self.project)
         self.viewerplus.setImage(image)
+        self.viewerplus.setAnnotations(previous_anotations2)
+
+        if swapped: # only in the swap there are annotations to load
+            if self.viewerplus.annotations is not None: # annotation panels already activated, just need to print blobs
+                self.showAnnotations(self.viewerplus.image, self.viewerplus.annotations, True) 
+            if self.viewerplus2.annotations is not None:
+                self.showAnnotations(self.viewerplus2.image, self.viewerplus2.annotations, True)
+
+        self.updatePanelsWithoutAnnotations()
 
     @pyqtSlot(int)
     def targetImageChanged(self, index2):
@@ -2125,6 +2187,10 @@ class TagLab(QMainWindow):
         N = len(self.project.images)
         if index2 == -1 or index2 >= N:
             return
+        swapped = False
+        previous_image2 = self.viewerplus2.image
+        previous_annotations2 = self.viewerplus2.annotations
+        previous_annotations = None
 
         self.viewerplus2.clear()
         self.btnGrid.setChecked(False)
@@ -2132,18 +2198,30 @@ class TagLab(QMainWindow):
         # target and source image cannot be the same !!
         index1 = self.comboboxSourceImage.currentIndex()
         if index1 == index2:
-            index1 = (index2 - 1) % N
+            swapped = True
+            index1 = self.project.getIndexFromImage(previous_image2)
+            previous_annotations = self.viewerplus.annotations
 
             self.doNotUpdatePanels()
             self.viewerplus.clear()
             self.viewerplus.setProject(self.project)
             self.viewerplus.setImage(self.project.images[index1])
+            self.viewerplus.setAnnotations(previous_annotations2)
             self.doUpdatePanels()
 
             self.updateComboboxSourceImage(index1)
 
         self.viewerplus2.setProject(self.project)
         self.viewerplus2.setImage(self.project.images[index2])
+        self.viewerplus2.setAnnotations(previous_annotations)
+
+        if swapped: # only in the swap there are annotations to load
+            if self.viewerplus.annotations is not None: # annotation panels already activated, just need to print blobs
+                self.showAnnotations(self.viewerplus.image, self.viewerplus.annotations, True) 
+            if self.viewerplus2.annotations is not None:
+                self.showAnnotations(self.viewerplus2.image, self.viewerplus2.annotations, True)
+
+        self.updatePanelsWithoutAnnotations()
 
 
     @pyqtSlot()
@@ -3016,7 +3094,7 @@ class TagLab(QMainWindow):
             msgBox.exec()
             return
 
-        image = self.last_image_loaded
+        image = self.activeviewer.image
         image.addNewDecayLayer()
         #self.updateToolStatus()
         self.updateImageSelectionMenu()
@@ -3150,6 +3228,7 @@ class TagLab(QMainWindow):
             if self.activeviewer.image is not None:
                 image = self.activeviewer.image
 
+        
 
         # update layers
         if self.split_screen_flag is False:
@@ -3176,18 +3255,17 @@ class TagLab(QMainWindow):
 
         image = None
         if viewerChanged is not None:
-            if self.activeviewer.image is not None:
-                image = self.activeviewer.image
+            if viewerChanged.image is not None:
+                image = viewerChanged.image
 
 
         annotations = None
         if viewerChanged is not None:
-            if self.activeviewer.annotations is not None:
-                annotations = self.activeviewer.annotations
+            if viewerChanged.annotations is not None:
+                annotations = viewerChanged.annotations
 
 
         if self.split_screen_flag is True and self.viewerplus.annotations is not None and self.viewerplus2.annotations is not None:
-
             # update compare panel (only if it is visible)
             index1 = self.comboboxSourceImage.currentIndex()
             index2 = self.comboboxTargetImage.currentIndex()
@@ -3200,7 +3278,7 @@ class TagLab(QMainWindow):
 
         self.labels_widget.setLabels(self.project, image, annotations)
         # update data panel
-        self.updateDataPanel()
+        self.updateDataPanel(viewerChanged)
 
         # molto sporco per collegare data panel, dovrebbe andare in data panel
         if image is not None:
@@ -3414,9 +3492,12 @@ class TagLab(QMainWindow):
                 viewerChanged.setAnnotations(annotations)
                 self.toggleAnnotations(image, enable) # need to activate blobs first
                 self.updatePanelsWithAnnotations(viewerChanged)
-            elif not enable:
-                self.toggleAnnotations(image, False)
-                viewerChanged.setAnnotations(None)
+            else:
+                self.toggleAnnotations(image, enable)
+                if not enable:
+                    viewerChanged.setAnnotations(None)
+                else:
+                    self.updatePanelsWithAnnotations(viewerChanged)
 
 
         except Exception as e:
@@ -3427,11 +3508,11 @@ class TagLab(QMainWindow):
         finally:
             QApplication.restoreOverrideCursor()
 
-    def updateDataPanel(self):
+    def updateDataPanel(self, viewerChanged = None ):
 
-        if self.activeviewer is not None:
-            if self.activeviewer.image is not None:
-                self.data_panel.setTable(self.project, self.activeviewer.image, self.activeviewer.annotations)
+        if viewerChanged is not None:
+            if viewerChanged.image is not None:
+                self.data_panel.setTable(self.project, viewerChanged.image, viewerChanged.annotations)
 
 
     @pyqtSlot(Layer, bool)

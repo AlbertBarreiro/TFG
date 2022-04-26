@@ -377,6 +377,12 @@ class Project(object):
             if img.id == id:
                 return img
         return None
+    
+    def getIndexFromImage(self, image):
+        for index in range(len(self.images)):
+            if image == self.images[index]:
+                return index
+        return None
 
     def getImagePairCorrespondences(self, sourceImg, source_annotation, targetImg, target_annotation):
         """
@@ -386,7 +392,7 @@ class Project(object):
         """
         
         key = sourceImg.id + "_" + source_annotation.id + "-" + targetImg.id + "_" + target_annotation.id
-        print("key: ", key)
+
         if self.correspondences is None:
             # create a new correspondences table
             self.correspondences = {}
