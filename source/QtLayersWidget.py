@@ -118,7 +118,7 @@ class QtLayersWidget(QTreeWidget):
             item = it.value()
             if item.type == 'image':
                 if item.image == image1 or item.image == image2:
-                    if item.checkState(0) != Qt.Checked: # if it was checked leave everything as before
+                    if item.checkState(0) != Qt.Checked:
                         item.setIcon(0, self.icon_eyeopen)
                         item.setCheckState(0, Qt.Checked)
                         if len(item.image.layers):
@@ -142,7 +142,7 @@ class QtLayersWidget(QTreeWidget):
                     else:
                         child.setFlags(Qt.NoItemFlags) #Qt.ItemIsEnabled)
 
-                    if not imgWasChecked:
+                    if not imgWasChecked:   # if img was checked leave everything as before
                         child.setCheckState(0, Qt.Unchecked)
 
             it += 1

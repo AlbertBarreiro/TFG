@@ -614,7 +614,7 @@ class TagLab(QMainWindow):
         self.split_screen_flag = False
         self.update_panels_flag = True
         self.counter = 0
-        self.disableSplitScreen()
+        self.disableSplitScreen(True)
 
         self.setGuiPreferences()
 
@@ -1215,7 +1215,7 @@ class TagLab(QMainWindow):
         # update views
         index = max(self.comboboxSourceImage.currentIndex()-1, 0)
 
-        self.disableSplitScreen()
+        self.disableSplitScreen(True)
 
         if self.viewerplus.image == img:
             self.showImage(self.project.images[index])
@@ -1421,7 +1421,7 @@ class TagLab(QMainWindow):
     @pyqtSlot()
     def toggleComparison(self):
         if self.split_screen_flag is True:
-            self.disableSplitScreen()
+            self.disableSplitScreen(False)
         else:
             self.enableSplitScreen()
 
@@ -1490,7 +1490,7 @@ class TagLab(QMainWindow):
         elif event.key() == Qt.Key_S and modifiers & Qt.AltModifier:
 
             if self.split_screen_flag is True:
-                self.disableSplitScreen()
+                self.disableSplitScreen(False)
             else:
                 self.enableSplitScreen()
 
@@ -1681,7 +1681,8 @@ class TagLab(QMainWindow):
             else:
                 self.viewerplus.hideGrid()
 
-    def disableSplitScreen(self):
+    def disableSplitScreen(self, changed):
+        # changed indicates if there are images or annotations added, removed or updated
 
         if self.activeviewer is not None:
             if self.activeviewer.tools.tool == "MATCH":
@@ -1712,7 +1713,7 @@ class TagLab(QMainWindow):
         self.split_screen_flag = False
 
         self.activeviewer = self.viewerplus
-        self.updatePanelsWithoutAnnotations()
+        self.updatePanelsWithoutAnnotations(changed=changed)
 
     def enableSplitScreen(self):
 
@@ -2305,7 +2306,7 @@ class TagLab(QMainWindow):
         self.comboboxSourceImage.clear()
         self.comboboxTargetImage.clear()
         self.resetPanelInfo()
-        self.disableSplitScreen()
+        self.disableSplitScreen(True)
         self.layers_widget.setProject(self.project)
 
     def resetToolbar(self):
@@ -3214,9 +3215,10 @@ class TagLab(QMainWindow):
 
         self.update_panels_flag = True
 
-    def updatePanelsWithoutAnnotations(self):
+    def updatePanelsWithoutAnnotations(self, changed = True):
         """
         Update panels that don't need annotation info (labels, layers, data panel, compare panel and map viewer)
+        changed indicates if there are images or annotations added, removed or updated
         """
 
         if self.update_panels_flag is False:
@@ -3232,7 +3234,8 @@ class TagLab(QMainWindow):
 
         # update layers
         if self.split_screen_flag is False:
-            self.layers_widget.setProject(self.project)
+            if changed:
+                self.layers_widget.setProject(self.project)
             self.layers_widget.setImage(image)
         else:
             #self.layers_widget.setProject(self.project)
@@ -3241,8 +3244,8 @@ class TagLab(QMainWindow):
         # update map viewer
         if self.mapviewer.isVisible():
             w = self.mapviewer.width()
-            thumb = self.activeviewer.pixmap.scaled(w, w, Qt.KeepAspectRatio, Qt.SmoothTransformation) #TODO esto peta 
-            self.mapviewer.setPixmap(thumb)
+            #thumb = self.activeviewer.pixmap.scaled(w, w, Qt.KeepAspectRatio, Qt.SmoothTransformation) #TODO esto peta 
+            #self.mapviewer.setPixmap(thumb)
             self.mapviewer.setOpacity(0.5)
 
 
@@ -3457,7 +3460,7 @@ class TagLab(QMainWindow):
             index = self.project.images.index(image)
             self.updateComboboxSourceImage(index)
             self.updateComboboxSourceImage(index)
-            self.disableSplitScreen()
+            self.disableSplitScreen(True)
             self.setBlobVisualization()
 
         except Exception as e:
@@ -3581,7 +3584,7 @@ class TagLab(QMainWindow):
         filters = "ANNOTATION PROJECT (*.json)"
         filename, _ = QFileDialog.getOpenFileName(self, "Open a project", self.taglab_dir, filters)
         if filename:
-            self.disableSplitScreen()
+            self.disableSplitScreen(True)
             self.appendProject(filename)
 
         self.updateImageSelectionMenu()
@@ -3604,7 +3607,7 @@ class TagLab(QMainWindow):
             if self.activeviewer.image is not None:
                 if self.working_area_widget is None:
 
-                    self.disableSplitScreen()
+                    self.disableSplitScreen(True)
 
                     self.working_area_widget = QtWorkingAreaWidget(self)
                     self.working_area_widget.btnChooseArea.clicked.connect(self.enableAreaSelection)
