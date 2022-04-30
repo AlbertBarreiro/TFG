@@ -732,7 +732,7 @@ class QtImageViewerPlus(QtImageViewer):
         if self.annotations == None and self.tools.tool not in {"MOVE", "RULER"} :
             msgBox = QMessageBox()
             msgBox.setWindowTitle("TagLab")
-            msgBox.setText("Unable to use the tool since there is no map selected")
+            msgBox.setText("Unable to use the tool since there is no annotation selected")
             msgBox.exec()
             return
 

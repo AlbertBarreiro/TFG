@@ -1277,9 +1277,15 @@ class TagLab(QMainWindow):
 
         img_source_index = self.comboboxSourceImage.currentIndex()
         img_target_index = self.comboboxTargetImage.currentIndex()
-        updated_corresp = self.project.updateGenets(img_source_index, img_target_index)
+        source_img = self.project.images[img_source_index]
+        target_img = self.project.images[img_target_index]
+
+        updated_corresp = self.project.updateGenets(source_img, source_annotations, target_img, target_annotaions)
+
         if self.compare_panel.correspondences is None:
-            self.compare_panel.setTable(self.project, img_source_index, img_target_index)
+            source_annotations = self.viewerplus.annotations
+            target_annotaions = self.viewerplus2.annotations
+            self.compare_panel.setTable(self.project, source_img, source_annotations, target_img, target_annotaions)
         else:
             self.compare_panel.updateTable(updated_corresp)
 
@@ -1332,8 +1338,12 @@ class TagLab(QMainWindow):
 
         if img_source_index == img_target_index:
             return
+        source_img = self.project.images[img_source_index]
+        source_annotations = self.viewerplus.annotations
+        target_img = self.project.images[img_target_index]
+        target_annotaions = self.viewerplus2.annotations
 
-        key = self.project.images[img_source_index].id + "-" + self.project.images[img_target_index].id
+        key = self.project.getKeyCorrespondences(source_img, source_annotations, target_img, target_annotaions)
         corr = self.project.correspondences.get(key)
 
         if corr is not None and corr.data.empty is False:
@@ -1343,8 +1353,8 @@ class TagLab(QMainWindow):
             if reply != QMessageBox.Yes:
                 return
 
-        self.project.computeCorrespondences(img_source_index, img_target_index)
-        self.compare_panel.setTable(self.project, img_source_index, img_target_index)
+        self.project.computeCorrespondences(source_img, source_annotations, target_img, target_annotaions)
+        self.compare_panel.setTable(self.project, source_img, source_annotations, target_img, target_annotaions)
         self.setTool("MATCH")
 
 
@@ -1818,10 +1828,15 @@ class TagLab(QMainWindow):
 
             img_source_index = self.comboboxSourceImage.currentIndex()
             img_target_index = self.comboboxTargetImage.currentIndex()
-            self.project.addCorrespondence(img_source_index, img_target_index, sel1, sel2)
+            source_img = self.project.images[img_source_index]
+            source_annotations = self.viewerplus.annotations
+            target_img = self.project.images[img_target_index]
+            target_annotaions = self.viewerplus2.annotations
+
+            self.project.addCorrespondence(source_img, source_annotations, target_img, target_annotaions, sel1, sel2)
 
             if self.compare_panel.correspondences is None:
-                self.compare_panel.setTable(self.project, img_source_index, img_target_index)
+                self.compare_panel.setTable(self.project, source_img, source_annotations, target_img, target_annotaions)
             else:
                 source_image = self.project.images[img_source_index]
                 target_image = self.project.images[img_target_index]
@@ -1928,7 +1943,7 @@ class TagLab(QMainWindow):
         self.viewerplus2.resetSelection()
 
         if self.compare_panel.correspondences is not None:
-            self.compare_panel.setTable(self.project, img_source_index, img_target_index)
+            self.compare_panel.setTable(self.project, source_image, self.viewerplus.annotations, target_image, self.viewerplus2.annotations)
         else:
             self.compare_panel.updateTable(corr)
 
@@ -2495,7 +2510,11 @@ class TagLab(QMainWindow):
             self.setTool("MATCH")
             img_source_index = self.comboboxSourceImage.currentIndex()
             img_target_index = self.comboboxTargetImage.currentIndex()
-            self.compare_panel.setTable(self.project, img_source_index, img_target_index)
+            source_img = self.project.images[img_source_index]
+            source_annotations = self.viewerplus.annotations
+            target_img = self.project.images[img_target_index]
+            target_annotaions = self.viewerplus2.annotations
+            self.compare_panel.setTable(self.project, source_img, source_annotations, target_img, target_annotaions)
 
     @pyqtSlot()
     def noteChanged(self):

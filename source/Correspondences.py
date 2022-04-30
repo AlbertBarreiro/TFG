@@ -239,7 +239,7 @@ class Correspondences(object):
             relatives = self.data[self.data['Blob1'] == id]
             if len(relatives):
                 continue
-            source = self.source.annotations.blobById(id)
+            source = self.source_annotations.blobById(id)
             row = [-1, source.id, -1, self.area_in_sq_cm(source.area, True), 0.0, source.class_name, "dead", type]
             df = pd.DataFrame([row], columns=self.data.columns)
             self.data = self.data.append(df)

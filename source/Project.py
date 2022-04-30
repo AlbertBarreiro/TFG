@@ -336,12 +336,12 @@ class Project(object):
                                self.correspondences.values()))
         return corresps
 
-    def updateGenets(self, img_source_idx, img_target_idx):
+    def updateGenets(self, source_img, source_annotations, target_img, target_annotaions):
         """
         Update the genets information in (1) the regions and (2) in the correspondences' table
         """
         self.genet.updateGenets()
-        corr = self.getImagePairCorrespondences(img_source_idx, img_target_idx)
+        corr = self.getImagePairCorrespondences(source_img, source_annotations, target_img, target_annotaions)
         corr.updateGenets()
         return corr
 
@@ -384,14 +384,19 @@ class Project(object):
                 return index
         return None
 
+    def getKeyCorrespondences(self, sourceImg, source_annotation, targetImg, target_annotation):
+        key = sourceImg.id + "_" + source_annotation.id + "-" + targetImg.id + "_" + target_annotation.id
+        return key
+
     def getImagePairCorrespondences(self, sourceImg, source_annotation, targetImg, target_annotation):
         """
         Given two image indices returns the current correspondences table or create a new one.
         Note that the correspondences between the image A and the image B are not the same of
         the image B and A.
         """
+
+        key = self.getKeyCorrespondences(sourceImg, source_annotation, targetImg, target_annotation)
         
-        key = sourceImg.id + "_" + source_annotation.id + "-" + targetImg.id + "_" + target_annotation.id
 
         if self.correspondences is None:
             # create a new correspondences table
@@ -406,12 +411,12 @@ class Project(object):
         return self.correspondences[key]
 
 
-    def addCorrespondence(self, img_source_idx, img_target_idx, blobs1, blobs2):
+    def addCorrespondence(self, source_img, source_annotations, target_img, target_annotaions, blobs1, blobs2):
         """
         Add a correspondences to the current ones.
         """
 
-        corr = self.getImagePairCorrespondences(img_source_idx, img_target_idx)
+        corr = self.getImagePairCorrespondences(source_img, source_annotations, target_img, target_annotaions)
         corr.set(blobs1, blobs2)
         self.genet.updateGenets()
         corr.updateGenets()
@@ -423,18 +428,18 @@ class Project(object):
         for corr in correspondences:
             corr.updateAreas(use_surface_area=flag_surface_area)
 
-    def computeCorrespondences(self, img_source_idx, img_target_idx):
+    def computeCorrespondences(self, source_img, source_annotations, target_img, target_annotaions):
         """
         Compute the correspondences between an image pair.
         """
 
-        conversion1 = self.images[img_source_idx].pixelSize()
-        conversion2 = self.images[img_target_idx].pixelSize()
+        conversion1 = source_img.pixelSize()
+        conversion2 = target_img.pixelSize()
 
         # switch form px to mm just for calculation (except areas that are in cm)
 
         blobs1 = []
-        for blob in self.images[img_source_idx].annotations.seg_blobs:
+        for blob in source_annotations.seg_blobs:
             blob_c = blob.copy()
             blob_c.bbox = (blob_c.bbox*conversion1).round().astype(int)
             blob_c.contour = blob_c.contour*conversion1
@@ -442,14 +447,14 @@ class Project(object):
             blobs1.append(blob_c)
 
         blobs2 = []
-        for blob in self.images[img_target_idx].annotations.seg_blobs:
+        for blob in target_annotaions.seg_blobs:
             blob_c = blob.copy()
             blob_c.bbox = (blob_c.bbox * conversion2).round().astype(int)
             blob_c.contour = blob_c.contour * conversion2
             blob_c.area = blob_c.area * conversion2 * conversion2 / 100
             blobs2.append(blob_c)
 
-        corr = self.getImagePairCorrespondences(img_source_idx, img_target_idx)
+        corr = self.getImagePairCorrespondences(source_img, source_annotations, target_img, target_annotaions)
         corr.autoMatch(blobs1, blobs2)
 
         lines = corr.correspondences + corr.dead + corr.born
