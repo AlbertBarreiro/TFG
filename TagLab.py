@@ -1699,7 +1699,7 @@ class TagLab(QMainWindow):
                 self.setTool("MOVE")
 
         self.viewerplus2.hide()
-        #self.viewerplus2.clear()
+        self.viewerplus2.clear()
 
         self.compare_panel.hide()
         self.data_panel.show()
@@ -1731,82 +1731,86 @@ class TagLab(QMainWindow):
             self.btnSplitScreen.setChecked(False)
             return
 
-        if len(self.project.images) > 1:
-            
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+        if len(self.project.images) < 2:
+            msgBox = QMessageBox()
+            msgBox.setWindowTitle(self.TAGLAB_VERSION)
+            msgBox.setText("At least two images are needed to activate the mode")
+            msgBox.exec()
+            return
+        QApplication.setOverrideCursor(Qt.WaitCursor)
 
-            source_annotations = None
-            target_annotations = None
+        source_annotations = None
+        target_annotations = None
 
-            self.viewerplus.viewChanged()
+        self.viewerplus.viewChanged()
 
-            index = self.comboboxSourceImage.currentIndex()
-            if index < 0:
-                index = 0
+        index = self.comboboxSourceImage.currentIndex()
+        if index < 0:
+            index = 0
 
-            if index <= len(self.project.images) - 2:
-                index_to_set = index
-            else:
-                index_to_set = index-1
+        if index <= len(self.project.images) - 2:
+            index_to_set = index
+        else:
+            index_to_set = index-1
 
-            self.comboboxSourceImage.currentIndexChanged.disconnect()
-            self.comboboxTargetImage.currentIndexChanged.disconnect()
+        self.comboboxSourceImage.currentIndexChanged.disconnect()
+        self.comboboxTargetImage.currentIndexChanged.disconnect()
 
-            self.comboboxSourceImage.setCurrentIndex(index_to_set)
-            self.comboboxTargetImage.setCurrentIndex(index_to_set + 1)
+        self.comboboxSourceImage.setCurrentIndex(index_to_set)
+        self.comboboxTargetImage.setCurrentIndex(index_to_set + 1)
 
-            if self.viewerplus.image == self.project.images[index_to_set]:
-                source_annotations = self.viewerplus.annotations
-            elif self.viewerplus.image == self.project.images[index_to_set+1]:
-                target_annotations = self.viewerplus.annotations
-            
-            self.doNotUpdatePanels()
-            self.viewerplus.clear()
-            self.viewerplus.setProject(self.project)
-            self.viewerplus.setImage(self.project.images[index_to_set])
-            self.viewerplus.setAnnotations(source_annotations)
+        if self.viewerplus.image == self.project.images[index_to_set]:
+            source_annotations = self.viewerplus.annotations
+        elif self.viewerplus.image == self.project.images[index_to_set+1]:
+            target_annotations = self.viewerplus.annotations
+        
+        self.doNotUpdatePanels()
+        self.viewerplus.clear()
+        self.viewerplus.setProject(self.project)
+        self.viewerplus.setImage(self.project.images[index_to_set])
+        self.viewerplus.setAnnotations(source_annotations)
 
-            self.viewerplus2.clear()
-            self.viewerplus2.setProject(self.project)
-            self.viewerplus2.setImage(self.project.images[index_to_set + 1])
-            self.viewerplus2.setAnnotations(target_annotations)
-            self.setBlobVisualization()
+        self.viewerplus2.clear()
+        self.viewerplus2.setProject(self.project)
+        self.viewerplus2.setImage(self.project.images[index_to_set + 1])
+        self.viewerplus2.setAnnotations(target_annotations)
+        self.setBlobVisualization()
 
-            self.doUpdatePanels()
+        self.doUpdatePanels()
 
-            self.comboboxSourceImage.currentIndexChanged.connect(self.sourceImageChanged)
-            self.comboboxTargetImage.currentIndexChanged.connect(self.targetImageChanged)
+        self.comboboxSourceImage.currentIndexChanged.connect(self.sourceImageChanged)
+        self.comboboxTargetImage.currentIndexChanged.connect(self.targetImageChanged)
 
-            self.viewerplus2.show()
-            self.comboboxTargetImage.show()
-            self.viewerplus.viewChanged()
+        self.viewerplus2.show()
+        self.comboboxTargetImage.show()
+        self.viewerplus.viewChanged()
 
-            self.viewerplus2.viewUpdated[QRectF].connect(self.mapviewer.drawOverlayImage)
+        self.viewerplus2.viewUpdated[QRectF].connect(self.mapviewer.drawOverlayImage)
 
-            if self.comparemenu is not None:
-                splitScreenAction = self.comparemenu.actions()[0]
-                if splitScreenAction is not None:
-                    splitScreenAction.setText("Disable Split Screen")
+        if self.comparemenu is not None:
+            splitScreenAction = self.comparemenu.actions()[0]
+            if splitScreenAction is not None:
+                splitScreenAction.setText("Disable Split Screen")
 
-            self.blobdock.hide()
+        self.blobdock.hide()
 
-            self.btnSplitScreen.setChecked(True)
-            self.split_screen_flag = True
+        self.btnSplitScreen.setChecked(True)
+        self.split_screen_flag = True
 
-            self.activeviewer = self.viewerplus
+        self.activeviewer = self.viewerplus
 
-            if self.viewerplus.annotations is not None: # annotation panels already activated, just need to print blobs
-                self.showAnnotations(self.viewerplus.image, self.viewerplus.annotations, True) 
-            elif self.viewerplus2.annotations is not None:
-                self.showAnnotations(self.viewerplus2.image, self.viewerplus2.annotations, True)
+        if self.viewerplus.annotations is not None: # annotation panels already activated, just need to print blobs
+            self.showAnnotations(self.viewerplus.image, self.viewerplus.annotations, True) 
+        elif self.viewerplus2.annotations is not None:
+            self.showAnnotations(self.viewerplus2.image, self.viewerplus2.annotations, True)
 
 
-            self.compare_panel.show()
-            self.data_panel.hide()
-            self.datadock.setWindowTitle("Comparison Table")
-            self.updatePanelsWithoutAnnotations()
+        self.compare_panel.show()
+        self.data_panel.hide()
+        self.datadock.setWindowTitle("Comparison Table")
+        self.updatePanelsWithoutAnnotations()
 
-            QApplication.restoreOverrideCursor()
+        QApplication.restoreOverrideCursor()
 
 
 
@@ -3502,8 +3506,7 @@ class TagLab(QMainWindow):
 
             if self.viewerplus.image == image:
                 viewerChanged = self.viewerplus
-
-            if self.viewerplus2.image == image:
+            elif self.viewerplus2.image == image:
                 viewerChanged = self.viewerplus2
 
 
