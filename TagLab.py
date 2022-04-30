@@ -2106,6 +2106,8 @@ class TagLab(QMainWindow):
 
             # update panels accordingly
             self.updatePanelsWithoutAnnotations()
+            if self.activeviewer.annotations is not None:
+                self.updatePanelsWithAnnotations(self.activeviewer)
 
     def updateImageSelectionMenu(self):
 
@@ -3307,11 +3309,12 @@ class TagLab(QMainWindow):
         self.updateDataPanel(viewerChanged)
 
         # molto sporco per collegare data panel, dovrebbe andare in data panel
-        if image is not None:
+        if image is not None and annotations is not None:
             annotations.blobUpdated.connect(self.updatePanelInfo)
             annotations.blobAdded.connect(self.updatePanelInfo)
             annotations.blobRemoved.connect(self.resetPanelInfo)
-
+        else:
+            self.resetPanelInfo()
     #REFACTOR
     @pyqtSlot()
     def setMapProperties(self):
@@ -3521,8 +3524,8 @@ class TagLab(QMainWindow):
                 self.toggleAnnotations(image, enable)
                 if not enable:
                     viewerChanged.setAnnotations(None)
-                else:
-                    self.updatePanelsWithAnnotations(viewerChanged)
+                
+                self.updatePanelsWithAnnotations(viewerChanged)
 
 
         except Exception as e:

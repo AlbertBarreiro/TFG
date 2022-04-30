@@ -182,7 +182,7 @@ height: 0px;
 
         # establish UNIQUE connections, otherwise the slots will be called MORE THAN ONE TIME
         # when the signal is emitted
-        if self.activeImg is not None:
+        if self.activeImg is not None and self.activateAnnotation is not None:
 
             try:
                 self.activateAnnotation.blobUpdated[Blob,Blob].connect(self.updateBlob, type=Qt.UniqueConnection)
@@ -203,9 +203,11 @@ height: 0px;
                 self.activateAnnotation.blobClassChanged[str,Blob].connect(self.updateBlobClass, type=Qt.UniqueConnection)
             except:
                 pass
+
             index = self.activeImg.getAnnotationPosition(self.activateAnnotation)
             self.data = self.activeImg.create_data_table(index)
-
+        else:
+            self.data = Image.create_data_table_empty()
         self.updateTable(self.data)
 
     @pyqtSlot(Blob)
