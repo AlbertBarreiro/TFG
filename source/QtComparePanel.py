@@ -21,6 +21,8 @@ from PyQt5.QtWidgets import QWidget, QSizePolicy, QComboBox, QLabel, QTableView,
     QHBoxLayout, QVBoxLayout, QAbstractItemView, QStyledItemDelegate, QAction, QMenu, QToolButton, QGridLayout, QLineEdit
 from PyQt5.QtGui import QColor
 from pathlib import Path
+from source.Project import Project
+from source.Blob import Blob
 
 path = Path(__file__).parent.absolute()
 imdir = str(path)
@@ -348,17 +350,44 @@ height: 0px;
 
         self.correspondences = project.getImagePairCorrespondences(self.sourceImg, self.sourceAnnotation, self.targetImg, self.targetAnnotation)
         self.correspondences.updateAreas()
+
+        for blob in self.sourceAnnotation.seg_blobs:
+            self.sourceBlobAdded(blob)
+        for blob in self.targetAnnotation.seg_blobs:
+            self.targetBlobAdded(blob)
+
         self.data = self.correspondences.data
 
         try:
-            self.sourceAnnotation.blobUpdated.connect(self.sourceBlobUpdated, type=Qt.UniqueConnection)
+            self.sourceAnnotation.blobUpdated[Blob, Blob].connect(self.sourceBlobUpdated, type=Qt.UniqueConnection)
         except:
             pass
 
         try:
-            self.targetAnnotation.blobUpdated.connect(self.targetBlobUpdated, type=Qt.UniqueConnection)
+            self.sourceAnnotation.blobAdded[Blob].connect(self.sourceBlobAdded, type=Qt.UniqueConnection)
         except:
             pass
+
+        try:
+            self.sourceAnnotation.blobRemoved[Blob].connect(self.sourceBlobRemoved, type=Qt.UniqueConnection)
+        except:
+            pass
+
+        try:
+            self.targetAnnotation.blobUpdated[Blob, Blob].connect(self.targetBlobUpdated, type=Qt.UniqueConnection)
+        except:
+            pass
+
+        try:
+            self.targetAnnotation.blobAdded[Blob].connect(self.targetBlobAdded, type=Qt.UniqueConnection)
+        except:
+            pass
+
+        try:
+            self.targetAnnotation.blobRemoved[Blob].connect(self.targetBlobRemoved, type=Qt.UniqueConnection)
+        except:
+            pass
+
 
         if self.model is None:
 
@@ -396,15 +425,35 @@ height: 0px;
         else:
             self.updateTable(self.correspondences)
 
-    def sourceBlobUpdated(self, blob):
-        for i, row in self.data.iterrows():
-            if row[0] == blob.id:
-                self.data.loc[i, 'Area1'] = self.correspondences.area_in_sq_cm(blob.area, True)
+    @pyqtSlot(Blob, Blob)
+    def sourceBlobUpdated(self, old_blob, new_blob):
+        self.correspondences.updateBlob(self.sourceImg, old_blob, new_blob)
+        self.updateTable(self.correspondences)
 
-    def targetBlobUpdated(self, blob):
-        for i, row in self.data.iterrows():
-            if row[1] == blob.id:
-                self.data.loc[i, 'Area2'] =  self.correspondences.area_in_sq_cm(blob.area, False)
+    @pyqtSlot(Blob)
+    def sourceBlobAdded(self, blob):
+        self.correspondences.addBlob(self.sourceImg, blob)
+        self.updateTable(self.correspondences)
+    
+    @pyqtSlot(Blob)
+    def sourceBlobRemoved(self, blob):
+        self.correspondences.removeBlob(self.sourceImg, blob)
+        self.updateTable(self.correspondences)
+
+    @pyqtSlot(Blob, Blob)
+    def targetBlobUpdated(self, old_blob, new_blob):
+        self.correspondences.updateBlob(self.targetImg, old_blob, new_blob)
+        self.updateTable(self.correspondences)
+
+    @pyqtSlot(Blob)
+    def targetBlobAdded(self, blob):
+        self.correspondences.addBlob(self.targetImg, blob)
+        self.updateTable(self.correspondences)
+    
+    @pyqtSlot(Blob)
+    def targetBlobRemoved(self, blob):
+        self.correspondences.removeBlob(self.targetImg, blob)
+        self.updateTable(self.correspondences)
 
     def clear(self):
 
@@ -412,6 +461,8 @@ height: 0px;
         self.data = None
 
         self.data_table.setModel(self.model)
+        #self.correspondences = Project.getImagePairEmptyCorrespondendes()
+        #self.data = self.correspondences.data
         self.data_table.update()
 
     def updateData(self):

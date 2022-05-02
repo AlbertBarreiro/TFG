@@ -22,7 +22,6 @@ from PyQt5.QtWidgets import QWidget, QSizePolicy, QComboBox, QLabel, QTableView,
 from PyQt5.QtGui import QColor
 import pandas as pd
 from source.Blob import Blob
-from source.Image import Image
 
 class TableModel(QAbstractTableModel):
     def __init__(self, data):
@@ -131,7 +130,8 @@ height: 0px;
 """);
 
 
-
+        self.model = None
+        self.data = None
         
 
         self.searchId = QLineEdit("")
@@ -150,27 +150,6 @@ height: 0px;
         self.project = None
         self.activeImg = None
         self.activateAnnotation = None
-
-        self.data = Image.create_data_table_empty()
-        self.model = TableModel(self.data)
-        self.sortfilter = QSortFilterProxyModel(self)
-        self.sortfilter.setSourceModel(self.model)
-        self.sortfilter.setSortRole(Qt.UserRole)
-        self.data_table.setModel(self.sortfilter)
-
-        self.data_table.setVisible(False)
-        self.data_table.verticalHeader().hide()
-        self.data_table.setVisible(True)
-        self.data_table.setEditTriggers(QAbstractItemView.DoubleClicked)
-
-        self.data_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.data_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.data_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
-        self.data_table.horizontalHeader().showSection(0)
-        self.data_table.update()
-
-        self.data_table.setStyleSheet("QHeaderView::section { background-color: rgb(40,40,40) }")
-        self.data_table.selectionModel().selectionChanged.connect(lambda x: self.selectionChanged.emit())
 
     def setTable(self, project, img, annotations):
 
@@ -206,59 +185,80 @@ height: 0px;
 
             index = self.activeImg.getAnnotationPosition(self.activateAnnotation)
             self.data = self.activeImg.create_data_table(index)
+        
+        if self.model is None:
+            self.model = TableModel(self.data)
+            self.sortfilter = QSortFilterProxyModel(self)
+            self.sortfilter.setSourceModel(self.model)
+            self.sortfilter.setSortRole(Qt.UserRole)
+            self.data_table.setModel(self.sortfilter)
+
+            self.data_table.setVisible(False)
+            self.data_table.verticalHeader().hide()
+            self.data_table.setVisible(True)
+            self.data_table.setEditTriggers(QAbstractItemView.DoubleClicked)
+
+            self.data_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+            self.data_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+            self.data_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+            self.data_table.horizontalHeader().showSection(0)
+            self.data_table.update()
+
+            self.data_table.setStyleSheet("QHeaderView::section { background-color: rgb(40,40,40) }")
+            self.data_table.selectionModel().selectionChanged.connect(lambda x: self.selectionChanged.emit())
         else:
-            self.data = Image.create_data_table_empty()
-        self.updateTable(self.data)
+            self.updateTable(self.data)
 
     @pyqtSlot(Blob)
     def addBlob(self, blob):
+        if self.activateAnnotation is not None:
+            scale_factor = self.activeImg.pixelSize()
+            area = round(blob.area * (scale_factor) * (scale_factor) / 100, 2)
+            new_row = {'Id': blob.id, 'Class': blob.class_name, 'Area':  area }
+            self.data = self.data.append(new_row, ignore_index=True)
 
-        scale_factor = self.activeImg.pixelSize()
-        area = round(blob.area * (scale_factor) * (scale_factor) / 100, 2)
-        new_row = {'Id': blob.id, 'Class': blob.class_name, 'Area':  area }
-        self.data = self.data.append(new_row, ignore_index=True)
+            # index is recalculated so that index i corresponds to row i
+            self.data.reset_index(drop=True, inplace=True)
 
-        # index is recalculated so that index i corresponds to row i
-        self.data.reset_index(drop=True, inplace=True)
-
-        self.updateTable(self.data)
+            self.updateTable(self.data)
 
     @pyqtSlot(Blob)
     def removeBlob(self, blob):
+        if self.activateAnnotation is not None:
+            index = self.data.index[self.data["Id"] == blob.id]
+            self.data = self.data.drop(index=index)
 
-        index = self.data.index[self.data["Id"] == blob.id]
-        self.data = self.data.drop(index=index)
+            # index is recalculated so that index i corresponds to row i
+            self.data.reset_index(drop=True, inplace=True)
 
-        # index is recalculated so that index i corresponds to row i
-        self.data.reset_index(drop=True, inplace=True)
-
-        self.updateTable(self.data)
+            self.updateTable(self.data)
 
     @pyqtSlot(Blob,Blob)
     def updateBlob(self, oldblob, newblob):
+        if self.activateAnnotation is not None:
+            for i, row in self.data.iterrows():
+                if row[0] == newblob.id:
+                    scale_factor = self.activeImg.pixelSize()
+                    self.data.loc[i, 'Area'] = round(newblob.area * (scale_factor) * (scale_factor) / 100, 2)
+                    self.data.loc[i, 'Class'] = newblob.class_name
 
-        for i, row in self.data.iterrows():
-            if row[0] == newblob.id:
-                scale_factor = self.activeImg.pixelSize()
-                self.data.loc[i, 'Area'] = round(newblob.area * (scale_factor) * (scale_factor) / 100, 2)
-                self.data.loc[i, 'Class'] = newblob.class_name
-
-        self.data_table.update()
+            self.data_table.update()
 
     @pyqtSlot(str,Blob)
     def updateBlobClass(self, old_class_name, newblob):
+        if self.activateAnnotation is not None:
+            for i, row in self.data.iterrows():
+                if row[0] == newblob.id:
+                    self.data.loc[i, 'Class'] = newblob.class_name
 
-        for i, row in self.data.iterrows():
-            if row[0] == newblob.id:
-                self.data.loc[i, 'Class'] = newblob.class_name
-
-        self.data_table.update()
+            self.data_table.update()
 
     def clear(self):
 
         self.model = None
         self.data = None
-
+        self.image = None
+        self.activateAnnotation = None
         self.data_table.setModel(self.model)
         self.data_table.update()
 

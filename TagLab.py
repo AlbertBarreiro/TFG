@@ -1734,7 +1734,7 @@ class TagLab(QMainWindow):
         if len(self.project.images) < 2:
             msgBox = QMessageBox()
             msgBox.setWindowTitle(self.TAGLAB_VERSION)
-            msgBox.setText("At least two images are needed to activate the mode")
+            msgBox.setText("At least two maps are needed to activate the mode")
             msgBox.exec()
             return
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -3277,8 +3277,16 @@ class TagLab(QMainWindow):
 
         self.updateImageSelectionMenu()
 
+    def clearPanelsWithAnnotations(self):
+        if self.split_screen_flag is True:
+            self.compare_panel.clear()
+        
+        self.labels_widget.setLabels(self.project, None, None)
 
+        self.data_panel.clear()
 
+        self.resetPanelInfo()
+     
     def updatePanelsWithAnnotations(self, viewerChanged = None):
 
         image = None
@@ -3293,15 +3301,17 @@ class TagLab(QMainWindow):
                 annotations = viewerChanged.annotations
 
 
-        if self.split_screen_flag is True and self.viewerplus.annotations is not None and self.viewerplus2.annotations is not None:
-            # update compare panel (only if it is visible)
-            index1 = self.comboboxSourceImage.currentIndex()
-            index2 = self.comboboxTargetImage.currentIndex()
-            if self.compare_panel.isVisible():
-                source_image = self.project.images[index1]
-                target_image = self.project.images[index2]
-                self.compare_panel.setTable(self.project, source_image, self.viewerplus.annotations, target_image, self.viewerplus2.annotations)
-
+        if self.split_screen_flag is True:
+            if self.viewerplus.annotations is not None and self.viewerplus2.annotations is not None:
+                # update compare panel (only if it is visible)
+                index1 = self.comboboxSourceImage.currentIndex()
+                index2 = self.comboboxTargetImage.currentIndex()
+                if self.compare_panel.isVisible():
+                    source_image = self.project.images[index1]
+                    target_image = self.project.images[index2]
+                    self.compare_panel.setTable(self.project, source_image, self.viewerplus.annotations, target_image, self.viewerplus2.annotations)
+            else:
+                self.compare_panel.clear()
 
 
         self.labels_widget.setLabels(self.project, image, annotations)
@@ -3313,8 +3323,7 @@ class TagLab(QMainWindow):
             annotations.blobUpdated.connect(self.updatePanelInfo)
             annotations.blobAdded.connect(self.updatePanelInfo)
             annotations.blobRemoved.connect(self.resetPanelInfo)
-        else:
-            self.resetPanelInfo()
+
     #REFACTOR
     @pyqtSlot()
     def setMapProperties(self):
@@ -3524,8 +3533,10 @@ class TagLab(QMainWindow):
                 self.toggleAnnotations(image, enable)
                 if not enable:
                     viewerChanged.setAnnotations(None)
+                    self.clearPanelsWithAnnotations()
+                else:
+                    self.updatePanelsWithAnnotations(viewerChanged)
                 
-                self.updatePanelsWithAnnotations(viewerChanged)
 
 
         except Exception as e:

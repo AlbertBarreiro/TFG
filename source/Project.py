@@ -388,6 +388,10 @@ class Project(object):
         key = sourceImg.id + "_" + source_annotation.id + "-" + targetImg.id + "_" + target_annotation.id
         return key
 
+    @staticmethod
+    def getImagePairEmptyCorrespondendes():
+        return Correspondences(None, None, None, None)
+
     def getImagePairCorrespondences(self, sourceImg, source_annotation, targetImg, target_annotation):
         """
         Given two image indices returns the current correspondences table or create a new one.
