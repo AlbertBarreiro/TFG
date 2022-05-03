@@ -67,7 +67,7 @@ class Image(object):
             self.grid = None
 
 
-    def addNewDecayLayer(self):
+    def addNewDecayAnnotationLayer(self):
         self.annotationLayers.append(Annotation())
 
     def deleteLayer(self, layer):

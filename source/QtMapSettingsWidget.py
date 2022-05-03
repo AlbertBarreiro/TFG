@@ -23,6 +23,11 @@ from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QImage, QImageReader, QPixmap, QIcon, qRgb, qRed, qGreen, qBlue
 from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QComboBox, QSizePolicy, QLineEdit, QLabel, QPushButton, QHBoxLayout, QVBoxLayout
 from source import utils
+import datetime
+from PIL import Image
+from PIL import Image
+import datetime
+import os.path, time
 
 class QtMapSettingsWidget(QWidget):
 
@@ -114,6 +119,11 @@ class QtMapSettingsWidget(QWidget):
         fileName, _ = QFileDialog.getOpenFileName(self, "Input Map File", "", filters)
         if fileName:
             self.fields["rgb_filename"]["edit"].setText(fileName)
+            if self.fields["acquisition_date"]["edit"].text() == "":
+                creation_time = time.ctime(os.path.getctime(fileName))
+                if creation_time is not None:
+                    f = datetime.datetime.strptime(creation_time, '%a %b %d %H:%M:%S %Y')
+                    self.fields["acquisition_date"]["edit"].setText(f.strftime('%Y-%m-%d'))
 
     @pyqtSlot()
     def chooseDEMFile(self):

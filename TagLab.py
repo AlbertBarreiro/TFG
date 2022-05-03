@@ -1724,6 +1724,7 @@ class TagLab(QMainWindow):
 
         self.activeviewer = self.viewerplus
         self.updatePanelsWithoutAnnotations(changed=changed)
+        self.clearPanelsWithAnnotations()
 
     def enableSplitScreen(self):
 
@@ -3121,7 +3122,7 @@ class TagLab(QMainWindow):
             return
 
         image = self.activeviewer.image
-        image.addNewDecayLayer()
+        image.addNewDecayAnnotationLayer()
         #self.updateToolStatus()
         self.updateImageSelectionMenu()
 
