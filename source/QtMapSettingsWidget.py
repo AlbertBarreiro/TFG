@@ -120,7 +120,7 @@ class QtMapSettingsWidget(QWidget):
         if fileName:
             self.fields["rgb_filename"]["edit"].setText(fileName)
             if self.fields["acquisition_date"]["edit"].text() == "":
-                creation_time = time.ctime(os.path.getctime(fileName))
+                creation_time = time.ctime(os.path.getmtime(fileName))
                 if creation_time is not None:
                     f = datetime.datetime.strptime(creation_time, '%a %b %d %H:%M:%S %Y')
                     self.fields["acquisition_date"]["edit"].setText(f.strftime('%Y-%m-%d'))
@@ -132,6 +132,11 @@ class QtMapSettingsWidget(QWidget):
         fileName, _ = QFileDialog.getOpenFileName(self, "Input 3D Map File", "", filters)
         if fileName:
             self.fields["depth_filename"]["edit"].setText(fileName)
+            if self.fields["acquisition_date"]["edit"].text() == "":
+                creation_time = time.ctime(os.path.getmtime(fileName))
+                if creation_time is not None:
+                    f = datetime.datetime.strptime(creation_time, '%a %b %d %H:%M:%S %Y')
+                    self.fields["acquisition_date"]["edit"].setText(f.strftime('%Y-%m-%d'))
 
     @pyqtSlot()
     def accept(self):
