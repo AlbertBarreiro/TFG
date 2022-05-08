@@ -21,7 +21,7 @@ import os
 
 from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QImage, QImageReader, QPixmap, QIcon, qRgb, qRed, qGreen, qBlue
-from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QComboBox, QSizePolicy, QLineEdit, QLabel, QPushButton, QHBoxLayout, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QMessageBox, QFileDialog, QComboBox, QSizePolicy, QLineEdit, QLabel, QPushButton, QHBoxLayout, QVBoxLayout 
 from source import utils
 import datetime
 from PIL import Image
@@ -38,18 +38,17 @@ class QtMapSettingsWidget(QWidget):
         self.setStyleSheet("background-color: rgb(40,40,40); color: white")
 
         self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
-        self.setMinimumWidth(300)
-        self.setMinimumHeight(100)
+        self.setFixedSize(510, 230)
 
 
         TEXT_SPACE = 100
 
         self.fields = {
-            "name"            : {"name": "Map Name:"        , "value": "", "place": "Name of the map"        , "width": 300, "action": None                 , "buttonText": ""},
-            "rgb_filename"    : {"name": "RGB Image:"       , "value": "", "place": "Path of the rgb image"  , "width": 300, "action": self.chooseMapFile   , "buttonText": "..." },
-            "depth_filename"  : {"name": "Depth Image:"     , "value": "", "place": "Path of the depth image", "width": 300, "action": self.chooseDEMFile   , "buttonText": "..."},
-            "acquisition_date": {"name": "Acquisition Date:", "value": "", "place": "YYYY-MM-DD"             , "width": 150, "action": None                 , "buttonText": ""},
-            "px_to_mm"        : {"name": "Pixel size (mm):"        , "value": "", "place": ""                , "width": 150, "action": None                 , "buttonText": "" }
+            "name"            : {"name": "Map Name *"           , "value": "", "place": "Name of the map"        , "width": 300, "action": None                 , "buttonText": ""},
+            "rgb_filename"    : {"name": "RGB Image *"          , "value": "", "place": "Path of the rgb image"  , "width": 300, "action": self.chooseMapFile   , "buttonText": "..." },
+            "depth_filename"  : {"name": "Depth Image"         , "value": "", "place": "Path of the depth image", "width": 300, "action": self.chooseDEMFile   , "buttonText": "..."},
+            "acquisition_date": {"name": "Acquisition Date *"   , "value": "", "place": "YYYY-MM-DD"             , "width": 150, "action": None                 , "buttonText": ""},
+            "px_to_mm"        : {"name": "Pixel size (mm)"     , "value": "", "place": ""                , "width": 150, "action": None                        , "buttonText": "" }
         }
         self.data = {}
 
@@ -84,8 +83,16 @@ class QtMapSettingsWidget(QWidget):
             layout.addStretch()
             layoutV.addLayout(layout)
 
-        buttons_layout = QHBoxLayout()
+        boxlayout = QVBoxLayout()
+        label = QLabel("    Please be sure to complete the items marked with an asterisk (*)")
+        label.setStyleSheet("font: 10pt")
+        boxlayout.addWidget(label)
+        boxlayout.addStretch()
+        layoutV.addLayout(boxlayout)
 
+
+        buttons_layout = QHBoxLayout()
+        
         self.btnCancel = QPushButton("Cancel")
         self.btnCancel.clicked.connect(self.close)
         self.btnApply = QPushButton("Apply")
@@ -119,11 +126,11 @@ class QtMapSettingsWidget(QWidget):
         fileName, _ = QFileDialog.getOpenFileName(self, "Input Map File", "", filters)
         if fileName:
             self.fields["rgb_filename"]["edit"].setText(fileName)
-            if self.fields["acquisition_date"]["edit"].text() == "":
-                creation_time = time.ctime(os.path.getmtime(fileName))
-                if creation_time is not None:
-                    f = datetime.datetime.strptime(creation_time, '%a %b %d %H:%M:%S %Y')
-                    self.fields["acquisition_date"]["edit"].setText(f.strftime('%Y-%m-%d'))
+
+            creation_time = time.ctime(os.path.getmtime(fileName))
+            if creation_time is not None:
+                f = datetime.datetime.strptime(creation_time, '%a %b %d %H:%M:%S %Y')
+                self.fields["acquisition_date"]["edit"].setText(f.strftime('%Y-%m-%d'))
 
     @pyqtSlot()
     def chooseDEMFile(self):
@@ -132,11 +139,11 @@ class QtMapSettingsWidget(QWidget):
         fileName, _ = QFileDialog.getOpenFileName(self, "Input 3D Map File", "", filters)
         if fileName:
             self.fields["depth_filename"]["edit"].setText(fileName)
-            if self.fields["acquisition_date"]["edit"].text() == "":
-                creation_time = time.ctime(os.path.getmtime(fileName))
-                if creation_time is not None:
-                    f = datetime.datetime.strptime(creation_time, '%a %b %d %H:%M:%S %Y')
-                    self.fields["acquisition_date"]["edit"].setText(f.strftime('%Y-%m-%d'))
+
+            creation_time = time.ctime(os.path.getmtime(fileName))
+            if creation_time is not None:
+                f = datetime.datetime.strptime(creation_time, '%a %b %d %H:%M:%S %Y')
+                self.fields["acquisition_date"]["edit"].setText(f.strftime('%Y-%m-%d'))
 
     @pyqtSlot()
     def accept(self):
