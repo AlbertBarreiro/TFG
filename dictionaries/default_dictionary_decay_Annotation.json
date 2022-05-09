@@ -1,0 +1,70 @@
+{
+  "Name": "scripps",
+  "Description": "These color codes are the ones typically used by the Scripps Institution of Oceanography (UCSD)",
+  "Labels": [
+    {
+      "id": "Empty",
+      "name": "Empty",
+      "description": null,
+      "fill": [
+        127,
+        127,
+        127
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+	{
+	   "id": "not degraded",
+	   "name": "not degraded",
+	   "description": null,
+	   "fill": [
+		255,
+		255,
+		0
+	   ],
+	   "border": [
+		200,
+		200,
+		200
+	   ],
+		"visible": true
+	},
+    {
+	   "id": "degraded",
+	   "name": "degraded",
+	   "description": null,
+	   "fill": [
+		255,
+		0,
+		234
+	   ],
+	   "border": [
+		200,
+		200,
+		200
+	   ],
+	   "visible": true
+	},
+	{
+	   "id": "neutral color",
+	   "name": "neutral color",
+	   "description": null,
+	   "fill": [
+		255,
+		0,
+		0
+	   ],
+	   "border": [
+		200,
+		200,
+		200
+	   ],
+	   "visible": true
+	}
+  ]
+}

@@ -26,6 +26,7 @@ from pathlib import Path
 import os
 import pandas as pd
 from source.Blob import Blob
+from source.Project import Project
 
 path = Path(__file__).parent.absolute()
 imdir = str(path)
@@ -228,10 +229,11 @@ height: 0px;
     def setLabels(self, project, img, annotations):
 
         if self.project is not None:
-          if self.labels == project.labels and self.activeImg == img and self.activeAnnotations == annotations:
+          if self.activeImg == img and self.activeAnnotations == annotations and self.labels == annotations.labels:
              return
 
-        self.labels = project.labels.copy()
+        if annotations is not None:
+            self.labels = annotations.labels.copy()
 
         self.project = project
         self.activeImg = img
@@ -298,6 +300,16 @@ height: 0px;
             self.data_table.selectionModel().selectionChanged.connect(lambda x: self.selectionChanged.emit())
         else:
             self.updateTable(self.data)
+
+    def clear(self):
+        if self.model is not None:
+            self.model = None
+            self.data = None
+            self.image = None
+            self.activeAnnotations = None
+            
+            self.data_table.setModel(self.model)
+            self.data_table.update()
 
     def createColorButton(self, color):
 
@@ -425,7 +437,7 @@ height: 0px;
             self.data.loc[i, 'Visibility'] = 1
 
         # update the labels
-        for label in self.project.labels.values():
+        for label in self.activeAnnotations.labels.values():
             label.visible = True
 
 
@@ -436,7 +448,7 @@ height: 0px;
             self.data.loc[i, 'Visibility'] = 0
 
         # update the labels
-        for label in self.project.labels.values():
+        for label in self.activeAnnotations.labels.values():
             label.visible = False
 
 
@@ -444,7 +456,7 @@ height: 0px;
     def toggleVisibility(self, index):
 
         key = self.data['Class'][index]
-        label = self.project.labels[key]
+        label = self.activeAnnotations.labels[key]
 
         if QApplication.keyboardModifiers() == Qt.ControlModifier:
             self.setAllNotVisible()

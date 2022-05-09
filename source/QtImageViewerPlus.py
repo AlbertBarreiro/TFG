@@ -413,7 +413,7 @@ class QtImageViewerPlus(QtImageViewer):
     def enableFill(self):
         if self.annotations is not None:
             for blob in self.annotations.seg_blobs:
-                brush = self.project.classBrushFromName(blob)
+                brush = self.annotations.classBrushFromName(blob)
                 if blob.qpath_gitem is not None:
                     blob.qpath_gitem.setBrush(brush)
 
@@ -573,7 +573,7 @@ class QtImageViewerPlus(QtImageViewer):
         blob.setupForDrawing()
         pen = self.border_selected_pen if blob in self.selected_blobs else self.border_pen
 
-        brush = self.project.classBrushFromName(blob)
+        brush = self.annotations.classBrushFromName(blob)
         blob.qpath_gitem = self.scene.addPath(blob.qpath, pen, brush)
         blob.qpath_gitem.setZValue(1)
         blob.qpath_gitem.setOpacity(self.transparency_value)
@@ -934,7 +934,7 @@ class QtImageViewerPlus(QtImageViewer):
         self.resetSelection()
         if self.annotations is not None:
             for blob in self.annotations.seg_blobs:
-                visible = self.project.isLabelVisible(blob.class_name)
+                visible = self.annotations.isLabelVisible(blob.class_name)
                 if not visible:
                     continue
                 box = blob.bbox
@@ -1012,7 +1012,7 @@ class QtImageViewerPlus(QtImageViewer):
     def updateVisibility(self):
         if self.annotations is not None:
             for blob in self.annotations.seg_blobs:
-                visibility = self.project.isLabelVisible(blob.class_name)
+                visibility = self.annotations.isLabelVisible(blob.class_name)
                 self.setBlobVisible(blob, visibility)
 
 
@@ -1162,7 +1162,7 @@ class QtImageViewerPlus(QtImageViewer):
 
             self.undo_data.setBlobClass(blob, class_name)
             self.annotations.setBlobClass(blob, class_name)
-            brush = self.project.classBrushFromName(blob)
+            brush =  self.annotations.classBrushFromName(blob)
             blob.qpath_gitem.setBrush(brush)
 
         self.scene.invalidate()
@@ -1176,7 +1176,7 @@ class QtImageViewerPlus(QtImageViewer):
         self.annotations.setBlobClass(blob, class_name)
 
         if blob.qpath_gitem:
-            brush = self.project.classBrushFromName(blob)
+            brush = self.annotations.classBrushFromName(blob)
             blob.qpath_gitem.setBrush(brush)
             self.scene.invalidate()
 
@@ -1216,7 +1216,7 @@ class QtImageViewerPlus(QtImageViewer):
 
         for (blob, class_name) in operation['class']:
             self.annotations.setBlobClass(blob, class_name)
-            brush = self.project.classBrushFromName(blob)
+            brush = self.annotations.classBrushFromName(blob)
             #this might apply to blobs NOT in this image (or rendered)
             if blob.qpath_gitem:
                 blob.qpath_gitem.setBrush(brush)
@@ -1245,7 +1245,7 @@ class QtImageViewerPlus(QtImageViewer):
 
         for (blob, class_name) in operation['newclass']:
             self.annotations.setBlobClass(blob, class_name)
-            brush = self.project.classBrushFromName(blob)
+            brush = self.annotations.classBrushFromName(blob)
             blob.qpath_gitem.setBrush(brush)
 
         self.updateVisibility()

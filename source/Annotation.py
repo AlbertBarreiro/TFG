@@ -66,10 +66,32 @@ class Annotation(QObject):
         self.refine_depth_weight = 0.0
         self.refine_conservative = 0.1
 
+        self.labels = {}
+
         # cache
         self.table_needs_update = True
         self.cache_data_table = None
         self.cache_labels_table = None
+
+    def classBrushFromName(self, blob):
+        brush = QBrush()
+        if blob.class_name == "Empty":
+            return brush
+
+        if not blob.class_name in self.labels:
+            print("Missing label for " + blob.class_name + ". Creating one.")
+            self.labels[blob.class_name] = Label(blob.class_name, blob.class_name, fill = [255, 0, 0])
+
+        color = self.labels[blob.class_name].fill
+        brush = QBrush(QColor(color[0], color[1], color[2], 200))
+        return brush
+
+    def isLabelVisible(self, id):
+        if not id in self.labels:
+            print("WARNING! Unknown label: " + id)
+
+        lbl = self.labels.get(id)
+        return self.labels[id].visible
 
     def addBlob(self, blob, notify=True):
         used = [blob.id for blob in self.seg_blobs]
@@ -96,7 +118,7 @@ class Annotation(QObject):
 
     def updateBlob(self, old_blob, new_blob):
 
-        new_blob.id = old_blob.id;
+        new_blob.id = old_blob.id
         self.removeBlob(old_blob, notify=False)
         self.addBlob(new_blob, notify=False)
         self.blobUpdated.emit(old_blob,new_blob)

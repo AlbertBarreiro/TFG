@@ -254,13 +254,13 @@ height: 0px;
             self.data_table.update()
 
     def clear(self):
-
-        self.model = None
-        self.data = None
-        self.image = None
-        self.activateAnnotation = None
-        self.data_table.setModel(self.model)
-        self.data_table.update()
+        if self.model is not None:
+            self.model = None
+            self.data = None
+            self.image = None
+            self.activateAnnotation = None
+            self.data_table.setModel(self.model)
+            self.data_table.update()
 
     def updateData(self):
 

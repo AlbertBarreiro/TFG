@@ -287,25 +287,6 @@ class Project(object):
             raise ("Missing label for " + class_name)
         return self.labels[class_name].fill
 
-    def classBrushFromName(self, blob):
-        brush = QBrush()
-        if blob.class_name == "Empty":
-            return brush
-
-        if not blob.class_name in self.labels:
-            print("Missing label for " + blob.class_name + ". Creating one.")
-            self.labels[blob.class_name] = Label(blob.class_name, blob.class_name, fill = [255, 0, 0])
-
-        color = self.labels[blob.class_name].fill
-        brush = QBrush(QColor(color[0], color[1], color[2], 200))
-        return brush
-
-    def isLabelVisible(self, id):
-        if not id in self.labels:
-            print("WARNING! Unknown label: " + id)
-
-        lbl = self.labels.get(id)
-        return self.labels[id].visible
 
     def orderImagesByAcquisitionDate(self):
         """
@@ -470,7 +451,7 @@ class Project(object):
 
         self.genet.updateGenets()
         corr.updateGenets()
-
+     
 
     def create_labels_table(self, image, annotations):
 
@@ -479,29 +460,35 @@ class Project(object):
         If an active image is given, some statistics are added.
         '''
 
-        dict = {
-            'Visibility': np.zeros(len(self.labels), dtype=np.int),
-            'Color': [],
-            'Class': [],
-            '#': np.zeros(len(self.labels), dtype=np.int),
-            'Coverage': np.zeros(len(self.labels),dtype=np.float)
-        }
+        df = None
+        if annotations is not None:
+            labels = annotations.labels
+            
+            dict = {
+                'Visibility': np.zeros(len(labels), dtype=np.int),
+                'Color': [],
+                'Class': [],
+                '#': np.zeros(len(labels), dtype=np.int),
+                'Coverage': np.zeros(len(labels),dtype=np.float)
+            }
 
-        for i, key in enumerate(list(self.labels.keys())):
-            label = self.labels[key]
-            dict['Visibility'][i] = int(label.visible)
-            dict['Color'].append(str(label.fill))
-            dict['Class'].append(label.name)
+            for i, key in enumerate(list(labels.keys())):
+                label = labels[key]
+                dict['Visibility'][i] = int(label.visible)
+                dict['Color'].append(str(label.fill))
+                dict['Class'].append(label.name)
 
-            if annotations is None:
-                count = 0
-                new_area = 0.0
-            else:
-                count, new_area = annotations.calculate_perclass_blobs_value(label, image.pixelSize())
+                if annotations is None:
+                    count = 0
+                    new_area = 0.0
+                else:
+                    count, new_area = annotations.calculate_perclass_blobs_value(label, image.pixelSize())
 
-            dict['#'][i] = count
-            dict['Coverage'][i] = new_area
+                dict['#'][i] = count
+                dict['Coverage'][i] = new_area
 
-        # create dataframe
-        df = pd.DataFrame(dict, columns=['Visibility', 'Color', 'Class', '#', 'Coverage'])
+            # create dataframe
+            df = pd.DataFrame(dict, columns=['Visibility', 'Color', 'Class', '#', 'Coverage'])
+        else:
+            df = pd.DataFrame({}, columns=['Visibility', 'Color', 'Class', '#', 'Coverage'])
         return df

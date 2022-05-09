@@ -42,6 +42,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QCo
     QMessageBox, QGroupBox, QLayout, QHBoxLayout, QVBoxLayout, QFrame, QDockWidget, QTextEdit, QAction
 
 import pprint
+from source.DecayAnnotation import DecayAnnotation
 # PYTORCH
 try:
     import torch
@@ -430,9 +431,10 @@ class TagLab(QMainWindow):
         # LABELS PANEL
         self.labels_widget = QtTableLabel()
         self.default_dictionary = self.settings_widget.settings.value("default-dictionary",
-                                                defaultValue="dictionaries/scripps.json", type=str)
-        self.project.loadDictionary(self.default_dictionary)
-        self.labels_widget.setLabels(self.project, None, None)
+                                                defaultValue="dictionaries/default_dictionary.json", type=str)
+        
+        #self.project.loadDictionary(self.default_dictionary)
+        #self.labels_widget.setLabels(self.project, None, None)
 
         groupbox_style = "QGroupBox\
           {\
@@ -907,7 +909,7 @@ class TagLab(QMainWindow):
         createDicAct.triggered.connect(self.createDictionary)
 
         createDcyLayer = QAction("Create decay layer", self)
-        createDcyLayer.triggered.connect(self.createDecayLayer)
+        createDcyLayer.triggered.connect(self.createDecayAnnotationLayer)
 
         regionAttributesAct = QAction("Region Attributes...", self)
         regionAttributesAct.triggered.connect(self.editRegionAttributes)
@@ -1724,7 +1726,11 @@ class TagLab(QMainWindow):
 
         self.activeviewer = self.viewerplus
         self.updatePanelsWithoutAnnotations(changed=changed)
-        self.clearPanelsWithAnnotations()
+        
+        if  self.activeviewer.annotations is None:
+            self.clearPanelsWithAnnotations()
+        else:
+            self.updatePanelsWithAnnotations(self.activeviewer)
 
     def enableSplitScreen(self):
 
@@ -3112,7 +3118,7 @@ class TagLab(QMainWindow):
         self.dictionary_widget.show()
 
     @pyqtSlot()
-    def createDecayLayer(self):
+    def createDecayAnnotationLayer(self):
 
         if self.activeviewer.image is None:
             msgBox = QMessageBox()
@@ -3120,6 +3126,8 @@ class TagLab(QMainWindow):
             msgBox.setText("Unable to create a decay layer since there is no map selected")
             msgBox.exec()
             return
+
+
 
         image = self.activeviewer.image
         image.addNewDecayAnnotationLayer()
@@ -3282,7 +3290,7 @@ class TagLab(QMainWindow):
         if self.split_screen_flag is True:
             self.compare_panel.clear()
         
-        self.labels_widget.setLabels(self.project, None, None)
+        self.labels_widget.clear()
 
         self.data_panel.clear()
 

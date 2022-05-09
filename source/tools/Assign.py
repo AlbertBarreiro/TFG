@@ -32,7 +32,7 @@ class Assign(Tool):
 
         project = self.viewerplus.project
         for image in project.images:
-            blobs = [blob for blob in image.annotations.seg_blobs if blob.genet in genets]
+            blobs = [blob for blob in self.viewerplus.annotations.seg_blobs if blob.genet in genets]
             for blob in blobs:
                 self.viewerplus.setBlobClass(blob, self.active_label)
 

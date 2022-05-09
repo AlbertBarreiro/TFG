@@ -1,5 +1,6 @@
 from source.Channel import Channel
 from source.Blob import Blob
+from source.DecayAnnotation import DecayAnnotation
 from source.Shape import Layer, Shape
 from source.Annotation import Annotation
 from source.Grid import Grid
@@ -28,10 +29,10 @@ class Image(object):
 
         self.annotationLayers = []
         if len(annotationsList) == 0:
-            self.annotationLayers.append(Annotation())
+            self.annotationLayers.append(DecayAnnotation())
         else:
             for annotations in annotationsList:
-                annotationFilled = Annotation()
+                annotationFilled = Annotation() # TODO dependiendo de tipo de anotacion tenemos que crear un tipo u otro. Cuando se haga el guardado lo miramos
                 for annotation_data in annotations:
                     blob = Blob(None, 0, 0, 0)
                     blob.fromDict(annotation_data["blob"])
@@ -68,7 +69,7 @@ class Image(object):
 
 
     def addNewDecayAnnotationLayer(self):
-        self.annotationLayers.append(Annotation())
+        self.annotationLayers.append(DecayAnnotation())
 
     def deleteLayer(self, layer):
         self.layers.remove(layer)
