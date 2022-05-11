@@ -32,12 +32,15 @@ class QtLayersWidget(QTreeWidget):
         self.icon_eyeopen = QIcon(imdir+os.path.join("icons", "eye.png"))
         self.icon_eyeclosed = QIcon(imdir+os.path.join("icons", "cross.png"))
         self.itemChanged.connect(self.itemChecked)
+        self.itemDoubleClicked.connect(self.itemClickedTwice)
 
         self.setColumnCount(2)
         self.header().setSectionResizeMode(0, QHeaderView.Stretch)
         self.header().setSectionResizeMode(1, QHeaderView.Fixed)
         self.header().setStretchLastSection(False)
         self.setColumnWidth(1, 24)
+
+        self.changedName = False
 
         #self.current_images = None
 
@@ -65,7 +68,7 @@ class QtLayersWidget(QTreeWidget):
 
             for annotation in image.annotationLayers:
                 child = QTreeWidgetItem()
-                child.setText(0, "Annotations")
+                child.setText(0, annotation.name)
                 child.setCheckState(0, Qt.Checked)
                 child.setFlags(Qt.NoItemFlags)
                 child.type = 'annotations'
@@ -138,9 +141,9 @@ class QtLayersWidget(QTreeWidget):
                 for i in range(item.childCount()):
                     child = item.child(i)
                     if item.image == image1 or item.image == image2:
-                        child.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                        child.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled | Qt.ItemIsEditable)
                     else:
-                        child.setFlags(Qt.NoItemFlags) #Qt.ItemIsEnabled)
+                        child.setFlags(Qt.NoItemFlags | Qt.ItemIsEnabled | Qt.ItemIsEditable) #Qt.ItemIsEnabled)
 
                     if not imgWasChecked:   # if img was checked leave everything as before
                         child.setCheckState(0, Qt.Unchecked)
@@ -179,5 +182,16 @@ class QtLayersWidget(QTreeWidget):
             self.toggleLayer.emit(item.layer, checked)
 
         elif item.type == 'annotations':
-            self.setAnnotations(item)
-            self.showAnnotations.emit(item.image, item.annotation, checked)
+            if self.changedName:
+                item.annotation.name = item.text(0)
+                self.changedName = False
+            checkedParent = item.parent().checkState(0) == Qt.Checked   
+            if checkedParent:
+                self.setAnnotations(item)
+                self.showAnnotations.emit(item.image, item.annotation, checked)
+
+    def itemClickedTwice(self, item):
+        if item.type == 'annotations':
+            self.editItem(item)
+            self.changedName = True
+        

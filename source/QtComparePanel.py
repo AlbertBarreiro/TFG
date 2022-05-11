@@ -351,10 +351,11 @@ height: 0px;
         self.correspondences = project.getImagePairCorrespondences(self.sourceImg, self.sourceAnnotation, self.targetImg, self.targetAnnotation)
         self.correspondences.updateAreas()
 
-        for blob in self.sourceAnnotation.seg_blobs:
-            self.sourceBlobAdded(blob)
-        for blob in self.targetAnnotation.seg_blobs:
-            self.targetBlobAdded(blob)
+        if len(self.correspondences.correspondences) == 0:
+            for blob in self.sourceAnnotation.seg_blobs: #add the blobs created before enabling split mode
+                self.sourceBlobAdded(blob)
+            for blob in self.targetAnnotation.seg_blobs:
+                self.targetBlobAdded(blob)
 
         self.data = self.correspondences.data
 

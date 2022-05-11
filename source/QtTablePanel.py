@@ -257,7 +257,7 @@ height: 0px;
         if self.model is not None:
             self.model = None
             self.data = None
-            self.image = None
+            self.activeImg = None
             self.activateAnnotation = None
             self.data_table.setModel(self.model)
             self.data_table.update()

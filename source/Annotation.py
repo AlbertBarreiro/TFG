@@ -60,6 +60,7 @@ class Annotation(QObject):
         # list of all blobs
         self.seg_blobs = []
         self.id = str(uuid.uuid4())
+        self.name = "Annotation"
         
         #relative weight of depth map for refine borders
         #refactor: this is to be saved and loaded in qsettings

@@ -303,13 +303,12 @@ height: 0px;
 
     def clear(self):
         if self.model is not None:
-            self.model = None
-            self.data = None
-            self.image = None
+            self.data = pd.DataFrame({}, columns=[])
+            self.activeImg = None
             self.activeAnnotations = None
             
-            self.data_table.setModel(self.model)
-            self.data_table.update()
+            self.updateTable(self.data)
+            self.model = None
 
     def createColorButton(self, color):
 
