@@ -209,7 +209,7 @@ class Project(object):
 
         class_names = set()  # class names effectively used
         for image in self.images:
-            for annotations in image.annotationLayers:
+            for annotations in image.annotationLayers: # maybe it should just look at the active annotation 
                 for blob in annotations.seg_blobs:
                     class_names.add(blob.class_name)
 
@@ -242,43 +242,6 @@ class Project(object):
         #except Exception as a:
         #    print(str(a))
 
-    def loadDictionary(self, filename):
-
-        f = open(filename)
-        dictionary = json.load(f)
-        f.close()
-
-        self.dictionary_name = dictionary['Name']
-        self.dictionary_description = dictionary['Description']
-        labels = dictionary['Labels']
-
-        self.labels = {}
-        for label in labels:
-            id = label['id']
-            name = label['name']
-            fill = label['fill']
-            border = label['border']
-            description = label['description']
-            self.labels[name] = Label(id=id, name=name, fill=fill, border=border)
-
-    def setDictionaryFromListOfLabels(self, labels):
-        """
-        Convert the list of labels into a labels dictionary.
-        """
-
-        self.labels = {}
-
-        label_names = []
-        for label in labels:
-            label_names.append(label.name)
-
-        # 'Empty' key must be be always present
-        if not 'Empty' in label_names:
-            self.labels['Empty'] = Label(id='Empty', name='Empty', description=None, fill=[127, 127, 127],
-                                         border=[200, 200, 200], visible=True)
-
-        for label in labels:
-            self.labels[label.name] = label
 
     def classColor(self, class_name):
         if class_name == "Empty":

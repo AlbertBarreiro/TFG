@@ -42,7 +42,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QCo
     QMessageBox, QGroupBox, QLayout, QHBoxLayout, QVBoxLayout, QFrame, QDockWidget, QTextEdit, QAction
 
 import pprint
-from source.DecayAnnotation import DecayAnnotation
+
 # PYTORCH
 try:
     import torch
@@ -84,7 +84,8 @@ from source.QtDictionaryWidget import QtDictionaryWidget
 from source.QtRegionAttributesWidget import QtRegionAttributesWidget
 from source.QtShapefileAttributeWidget import QtAttributeWidget
 from source.QtPanelInfo import QtPanelInfo
-
+from source.DecayAnnotation import DecayAnnotation
+from source.QtColorAnnotationSettingsWidget import QtColorAnnotationSettingsWidget
 
 from source import utils
 from source.Blob import Blob
@@ -178,6 +179,7 @@ class TagLab(QMainWindow):
         self.editProjectWidget = None
         self.scale_widget = None
         self.dictionary_widget = None
+        self.color_widget = None
         self.working_area_widget = None
         self.classifierWidget = None
         self.newDatasetWidget = None
@@ -908,8 +910,11 @@ class TagLab(QMainWindow):
         createDicAct = QAction("Labels Dictionary Editor...", self)
         createDicAct.triggered.connect(self.createDictionary)
 
-        createDcyLayer = QAction("Create decay layer", self)
-        createDcyLayer.triggered.connect(self.createDecayAnnotationLayer)
+        createDcyAnnotation = QAction("Create decay annotation", self)
+        createDcyAnnotation.triggered.connect(self.createDecayAnnotationLayer)
+
+        createColorAnnotation = QAction("Create color annotation", self)
+        createColorAnnotation.triggered.connect(self.createColorAnnotationLayer)
 
         regionAttributesAct = QAction("Region Attributes...", self)
         regionAttributesAct.triggered.connect(self.editRegionAttributes)
@@ -1050,7 +1055,8 @@ class TagLab(QMainWindow):
         self.projectmenu.addSeparator()
         self.projectmenu.addAction(createDicAct)
         self.projectmenu.addSeparator()
-        self.projectmenu.addAction(createDcyLayer)
+        self.projectmenu.addAction(createDcyAnnotation)
+        self.projectmenu.addAction(createColorAnnotation)
         self.projectmenu.addSeparator()
         self.projectmenu.addAction(regionAttributesAct)
 
@@ -2324,7 +2330,7 @@ class TagLab(QMainWindow):
         self.network_name = None
         self.dataset_train_info = None
         self.project = Project()
-        self.project.loadDictionary(self.default_dictionary)
+        #self.project.loadDictionary(self.default_dictionary)
         self.last_image_loaded = None
         self.last_annotation_loaded = None
         self.activeviewer = None
@@ -3139,7 +3145,33 @@ class TagLab(QMainWindow):
         self.showImage(image)
 
 
+    @pyqtSlot()
+    def createColorAnnotationLayer(self):
+        if self.activeviewer.image is None:
+            msgBox = QMessageBox()
+            msgBox.setWindowTitle(self.TAGLAB_VERSION)
+            msgBox.setText("Unable to create a color layer since there is no map selected")
+            msgBox.exec()
+            return
 
+
+        self.color_widget = QtColorAnnotationSettingsWidget(parent = self)
+        self.color_widget.setWindowModality(Qt.WindowModal)
+        self.color_widget.create[list].connect(self.createColorAnnotation)
+
+        self.color_widget.show()
+
+    @pyqtSlot(list)
+    def createColorAnnotation(self, labels):
+        #map_labels = {label.name:label for label in labels}
+        image = self.activeviewer.image
+        image.addNewColorAnnotationLayer(labels)
+        #self.updateToolStatus()
+        self.updateImageSelectionMenu()
+
+
+        self.layers_widget.setProject(self.project)
+        self.showImage(image)
 
     @pyqtSlot()
     def closeDictionaryWidget(self):
@@ -3170,7 +3202,7 @@ class TagLab(QMainWindow):
         labels_list = self.dictionary_widget.labels
 
         # set the dictionary in the project
-        self.project.setDictionaryFromListOfLabels(labels_list)
+        self.activeviewer.annotations.setDictionaryFromListOfLabels(labels_list)
 
         # update labels widget
         #self.updatePanelsWithoutAnnotations()
@@ -3194,7 +3226,7 @@ class TagLab(QMainWindow):
                 label.fill = newcolor
 
         # set the dictionary in the project
-        self.project.setDictionaryFromListOfLabels(labels_list)
+        self.activeviewer.annotations.setDictionaryFromListOfLabels(labels_list)
 
         if oldname == newname:
             # only the color of the label changed
@@ -3227,7 +3259,7 @@ class TagLab(QMainWindow):
               self.activeviewer.setBlobClass(blob, "Empty")
 
         # set the dictionary in the project
-        self.project.setDictionaryFromListOfLabels(labels_list)
+        self.activeviewer.annotations.setDictionaryFromListOfLabels(labels_list)
 
         # update labels widget
         #self.updatePanelsWithoutAnnotations()

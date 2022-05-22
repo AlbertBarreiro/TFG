@@ -9,7 +9,7 @@ class DecayAnnotation(Annotation):
 
 
 
-    def __init__(self, labels = {}):
+    def __init__(self):
         super(DecayAnnotation,self).__init__()
 
         self.dictionary_name = ""

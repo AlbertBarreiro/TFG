@@ -1,6 +1,7 @@
 from source.Channel import Channel
 from source.Blob import Blob
 from source.DecayAnnotation import DecayAnnotation
+from source.ColorAnnotation import ColorAnnotation
 from source.Shape import Layer, Shape
 from source.Annotation import Annotation
 from source.Grid import Grid
@@ -70,6 +71,9 @@ class Image(object):
 
     def addNewDecayAnnotationLayer(self):
         self.annotationLayers.append(DecayAnnotation())
+
+    def addNewColorAnnotationLayer(self,labels):
+        self.annotationLayers.append(ColorAnnotation(labels))
 
     def deleteLayer(self, layer):
         self.layers.remove(layer)

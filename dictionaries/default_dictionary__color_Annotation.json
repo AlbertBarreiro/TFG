@@ -1,0 +1,166 @@
+{
+  "Name": "scripps",
+  "Description": "These color codes are the ones typically used by the Scripps Institution of Oceanography (UCSD)",
+  "Labels": [
+    {
+      "id": "ocher",
+      "name": "ocher",
+      "description": null,
+      "fill": [
+        220,
+        162,
+        80
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "light ocher",
+      "name": "light ocher",
+      "description": null,
+      "fill": [
+        220,
+        204,
+        188
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "pink",
+      "name": "pink",
+      "description": null,
+      "fill": [
+        239,
+        199,
+        187
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "black",
+      "name": "black",
+      "description": null,
+      "fill": [
+        44,
+        39,
+        46
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "light grey",
+      "name": "light grey",
+      "description": null,
+      "fill": [
+        161,
+        163,
+        176
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "white",
+      "name": "white",
+      "description": null,
+      "fill": [
+        244,
+        239,
+        235
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "dark gray",
+      "name": "dark gray",
+      "description": null,
+      "fill": [
+        76,
+        74,
+        88
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "green",
+      "name": "green",
+      "description": null,
+      "fill": [
+        108,
+        105,
+        90
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "magenta",
+      "name": "magenta",
+      "description": null,
+      "fill": [
+        117,
+        73,
+        70
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    },
+    {
+      "id": "red",
+      "name": "red",
+      "description": null,
+      "fill": [
+        255,
+        58,
+        92
+      ],
+      "border": [
+        200,
+        200,
+        200
+      ],
+      "visible": true
+    }
+  ]
+}

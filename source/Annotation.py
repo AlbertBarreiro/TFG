@@ -16,7 +16,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
 # for more details.
-
+import json
 import os
 import numpy as np
 from cv2 import fillPoly
@@ -38,6 +38,7 @@ import pandas as pd
 from scipy import ndimage as ndi
 from skimage.morphology import watershed, binary_dilation, binary_erosion
 from source.Blob import Blob
+from source.Label import Label
 import source.Mask as Mask
 
 from PyQt5.QtWidgets import QApplication
@@ -93,6 +94,44 @@ class Annotation(QObject):
 
         lbl = self.labels.get(id)
         return self.labels[id].visible
+
+    def loadDictionary(self, filename):
+
+        f = open(filename)
+        dictionary = json.load(f)
+        f.close()
+
+        self.dictionary_name = dictionary['Name']
+        self.dictionary_description = dictionary['Description']
+        labels = dictionary['Labels']
+
+        self.labels = {}
+        for label in labels:
+            id = label['id']
+            name = label['name']
+            fill = label['fill']
+            border = label['border']
+            description = label['description']
+            self.labels[name] = Label(id=id, name=name, fill=fill, border=border)
+    
+    def setDictionaryFromListOfLabels(self, labels):
+        """
+        Convert the list of labels into a labels dictionary.
+        """
+
+        self.labels = {}
+
+        label_names = []
+        for label in labels:
+            label_names.append(label.name)
+
+        # 'Empty' key must be be always present
+        if not 'Empty' in label_names:
+            self.labels['Empty'] = Label(id='Empty', name='Empty', description=None, fill=[127, 127, 127],
+                                         border=[200, 200, 200], visible=True)
+
+        for label in labels:
+            self.labels[label.name] = label
 
     def addBlob(self, blob, notify=True):
         used = [blob.id for blob in self.seg_blobs]
