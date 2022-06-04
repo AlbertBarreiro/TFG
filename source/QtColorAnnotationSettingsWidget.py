@@ -1,5 +1,6 @@
 import os
 import json
+import bisect
 
 from PyQt5.QtCore import Qt, QSize, pyqtSlot, pyqtSignal, QEvent
 from PyQt5.QtGui import QImage, QImageReader, QPixmap, QIcon, qRgb, qRed, qGreen, qBlue
@@ -137,9 +138,7 @@ class QtColorAnnotationSettingsWidget(QWidget):
             fill = label['fill']
             border = label['border']
             description = label['description']
-            self.labelsL.append(Label(id=id, name=name, fill=fill, border=border))
-
-        
+            bisect.insort_left(self.labelsL, Label(id=id, name=name, fill=fill, border=border))
 
 
     def createAllLabels(self, isLeft):
@@ -264,7 +263,7 @@ class QtColorAnnotationSettingsWidget(QWidget):
 
             move_label_name.setStyleSheet("border: none; color: lightgray;")
 
-            self.addLabelScroll(False, move_label, move_label_name, move_label_color)
+            self.addLabelScrollR(move_label, move_label_name, move_label_color)
 
             self.labelsL.pop(index)
             self.createAllLabels(True)
@@ -278,14 +277,14 @@ class QtColorAnnotationSettingsWidget(QWidget):
 
             move_label_name.setStyleSheet("border: none; color: lightgray;")
 
-            self.addLabelScroll(True, move_label, move_label_name, move_label_color)
+            self.addLabelScrollL(move_label, move_label_name, move_label_color)
 
             self.labelsR.pop(index)
             self.createAllLabels(False)
 
 
     @pyqtSlot()
-    def addLabelScroll(self, isLeft, new_label, new_label_name, new_label_color):
+    def addLabelScrollR(self, new_label, new_label_name, new_label_color):
 
         scroll = None
         labels_layout = None
@@ -293,19 +292,11 @@ class QtColorAnnotationSettingsWidget(QWidget):
         label_name = None
         label_color = None
 
-        if isLeft:
-            scroll = self.scrollL
-            labels_layout = self.labels_layoutL
-            labels = self.labelsL
-            label_name = self.label_nameL
-            label_color = self.label_colorL
-            
-        else:
-            scroll = self.scrollR
-            labels_layout = self.labels_layoutR
-            labels = self.labelsR
-            label_name = self.label_nameR
-            label_color = self.label_colorR
+        scroll = self.scrollR
+        labels_layout = self.labels_layoutR
+        labels = self.labelsR
+        label_name = self.label_nameR
+        label_color = self.label_colorR
 
 
         label_layout = QHBoxLayout()
@@ -325,6 +316,40 @@ class QtColorAnnotationSettingsWidget(QWidget):
         labels.append(new_label)
         label_name.append(new_label_name)
         label_color.append(new_label_color)
+
+
+    @pyqtSlot()
+    def addLabelScrollL(self, new_label, new_label_name, new_label_color):
+        scroll = None
+        labels_layout = None
+        labels = None
+        label_name = None
+        label_color = None
+
+    
+        scroll = self.scrollL
+        labels_layout = self.labels_layoutL
+        labels = self.labelsL
+        label_name = self.label_nameL
+        label_color = self.label_colorL
+
+        index = bisect.bisect_left(labels, new_label)
+        labels.insert(index, new_label)
+        label_name.insert(index, new_label_name)
+        label_color.insert(index, new_label_color)
+
+        label_layout = QHBoxLayout()
+        label_layout.addWidget(new_label_color)
+        label_layout.addWidget(new_label_name)
+
+        labels_layout.insertLayout(index, label_layout)
+
+        tempWidget = QWidget()
+        tempWidget.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        tempWidget.setMinimumHeight(400)
+        tempWidget.setMinimumWidth(220)
+        tempWidget.setLayout(labels_layout)
+        scroll.setWidget(tempWidget)
 
     
     def createAnnotation(self):
