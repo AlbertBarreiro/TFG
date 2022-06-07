@@ -18,7 +18,7 @@
 # for more details.
 from PyQt5.QtCore import Qt, QAbstractTableModel, QItemSelectionModel, QSortFilterProxyModel, QRegExp, QModelIndex, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QSizePolicy, QComboBox, QLabel, QTableView, QHeaderView, \
-    QHBoxLayout, QVBoxLayout, QAbstractItemView, QStyledItemDelegate, QAction, QMenu, QToolButton, QGridLayout, QLineEdit
+    QHBoxLayout, QVBoxLayout, QAbstractItemView, QStyledItemDelegate, QAction, QMenu, QToolButton, QGridLayout, QLineEdit, QMessageBox
 from PyQt5.QtGui import QColor
 import pandas as pd
 from source.Blob import Blob
@@ -48,7 +48,7 @@ class TableModel(QAbstractTableModel):
                     return ""
 
             # format floating point values
-            if index.column() == 2 or index.column() == 3:
+            if index.column() == 2:
                 txt = "{:.1f}".format(value) if value > 0 else ""
             else:
                 txt = str(value)
@@ -68,6 +68,12 @@ class TableModel(QAbstractTableModel):
     def setData(self, index, value, role):
 
         if index.isValid() and role == Qt.EditRole:
+            if value > 100 or value < 0:
+                msgBox = QMessageBox()
+                msgBox.setWindowTitle("TagLab")
+                msgBox.setText("Confidence must be between 0 and 100")
+                msgBox.exec()
+                return False
             self._data.iloc[index.row(), index.column()] = value
             self.confidenceChanged.emit(index.row(), value)
         else:

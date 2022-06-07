@@ -190,7 +190,7 @@ class Image(object):
                 'Id': np.zeros(number_of_seg, dtype=np.int),
                 'Class': [],
                 'Area': np.zeros(number_of_seg),
-                'Confidence': np.zeros(number_of_seg, dtype=np.int),
+                'Confidence': np.zeros(number_of_seg, dtype=np.int)
                 #'Surf. area': np.zeros(number_of_seg)
             }
 
