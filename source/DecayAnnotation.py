@@ -11,7 +11,8 @@ class DecayAnnotation(Annotation):
 
     def __init__(self):
         super(DecayAnnotation,self).__init__()
-
+        self.name = "Decay Annotation"
+        
         self.dictionary_name = ""
         self.dictionary_description = ""
         self.labels = {}

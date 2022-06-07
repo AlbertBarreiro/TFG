@@ -3102,11 +3102,18 @@ class TagLab(QMainWindow):
     def createDictionary(self):
         showMessage = False
         message = ""
-        if self.activeviewer.image is None:    
+
+        if self.split_screen_flag:   
+            message = "Dictionary editor not enabled while split screen is activated"
+            showMessage = True
+        elif self.activeviewer.image is None:    
             message = "Unable to add a dictionary since there is no map selected"
             showMessage = True
         elif self.activeviewer.annotations is None:   
             message = "Unable to add a dictionary since there is no annotation selected"
+            showMessage = True
+        elif type(self.activeviewer.annotations) is DecayAnnotation :   
+            message = "Decay annotations can't change their labels"
             showMessage = True
         if showMessage:
             msgBox = QMessageBox()
@@ -3566,10 +3573,13 @@ class TagLab(QMainWindow):
             if viewerChanged.annotations != annotations:
 
                 self.toggleAnnotations(image, False)
-
-                viewerChanged.setAnnotations(annotations)
-                self.toggleAnnotations(image, enable) # need to activate blobs first
-                self.updatePanelsWithAnnotations(viewerChanged)
+                if not enable:
+                    viewerChanged.setAnnotations(None)
+                    self.clearPanelsWithAnnotations()
+                else:
+                    viewerChanged.setAnnotations(annotations)
+                    self.toggleAnnotations(image, enable) # need to activate blobs first
+                    self.updatePanelsWithAnnotations(viewerChanged)
             else:
                 self.toggleAnnotations(image, enable)
                 if not enable:

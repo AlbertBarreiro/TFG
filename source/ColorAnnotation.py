@@ -12,6 +12,7 @@ class ColorAnnotation(Annotation):
     def __init__(self, labels = {}):
         super(ColorAnnotation,self).__init__()
 
+        self.name = "Color Annotation"
         self.dictionary_name = ""
         self.dictionary_description = ""
         
