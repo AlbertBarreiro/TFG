@@ -50,6 +50,7 @@ class Blob(object):
         self.instance_name = "noname"
         self.blob_name = "noname"
         self.class_name = "Empty"
+        self.confidence = 0
 
         self.genet = None
         # note about the coral, i.e. damage type
@@ -114,6 +115,8 @@ class Blob(object):
         blob.blob_name = self.blob_name
         blob.id = self.id
         blob.version = self.version + 1
+
+        blob.confidence = self.confidence
 
         blob.genet = self.genet
         blob.class_name = self.class_name

@@ -20,6 +20,7 @@ import json
 import os
 import numpy as np
 from cv2 import fillPoly
+import pickle as pkl
 
 from skimage import measure
 from skimage.io import imsave
@@ -30,6 +31,7 @@ from PyQt5.QtGui import QPainter, QImage, QPen, QBrush, QColor, qRgb
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from skimage.color import rgb2gray
 from skimage.draw import polygon_perimeter
+from PIL import Image as Imagee
 
 from source import utils
 
@@ -664,28 +666,68 @@ class Annotation(QObject):
 
         return count, tot_area
 
-    def import_label_map(self, filename, labels_dictionary, offset, scale, progress, create_holes=False):
+    def import_label_map(self, filenameLabels, filenameScores, labels_dictionary, offset, scale, progress, create_holes=False):
         """
         It imports a label map and create the corresponding blobs.
         The offset is stored as a [top, left] coordinates and scale are the scale factors of X and Y axis respectively.
         """
-
-        qimg_label_map = QImage(filename)
+        qimg_label_map = QImage(filenameLabels)
         qimg_label_map = qimg_label_map.convertToFormat(QImage.Format_RGB32)
+
+        fileobject = open(filenameScores, 'rb')
+        scores = pkl.load(fileobject)
+        max_scores = np.max(scores, 0)
+        max_scores =  max_scores * 100
+        h = max_scores.shape[0]
+        w = max_scores.shape[1]
+
+        max_scores_aux = np.zeros([h, w, 3], np.uint8)
+        max_scores_aux[:,:,0] = max_scores
+        max_scores_aux[:,:,1] = max_scores
+        max_scores_aux[:,:,2] = max_scores
+
+        max_scores = max_scores_aux
+
+        #im = Imagee.fromarray(max_scores[:,:,0])
+        #if im.mode != 'RGB':
+        #    im = im.convert('RGB')
+        #im.save("your_file1.png")
+
+        fileobject.close()
+        qimg_scores_map = utils.rgbToQImage(max_scores)
 
         # label map rescaling (if necessary)
         w_rescaled = round(qimg_label_map.width() * scale[0])
         h_rescaled = round(qimg_label_map.height() * scale[1])
         qimg_label_map = qimg_label_map.scaled(w_rescaled, h_rescaled, Qt.IgnoreAspectRatio, Qt.FastTransformation)
+ 
+        # scores map rescaling (if necessary)
+        w_rescaled = round(qimg_scores_map.width() * scale[0])
+        h_rescaled = round(qimg_scores_map.height() * scale[1])
+        qimg_scores_map = qimg_scores_map.scaled(w_rescaled, h_rescaled, Qt.IgnoreAspectRatio, Qt.FastTransformation)
+
 
         label_map = utils.qimageToNumpyArray(qimg_label_map)
-
         label_map = label_map.astype(np.int32)
+        
+        max_scores = utils.qimageToNumpyArray(qimg_scores_map)
+        
+        im = Imagee.fromarray(max_scores[:,:,0])
+
+        max_scores = max_scores[:,:,0]
 
         # RGB -> label code association (ok, it is a dirty trick but it saves time...)
         label_coded = label_map[:, :, 0] + (label_map[:, :, 1] << 8) + (label_map[:, :, 2] << 16)
 
-        labels = measure.label(label_coded, connectivity=1)
+        labels, num_labels = measure.label(label_coded, connectivity=1, return_num=True)
+        
+        acum_scores = [0] * (num_labels+1)
+        count_num_scores = [0] * (num_labels+1)
+        for i in range(len(labels)):
+            for j in range(len(labels[i])):
+                label = labels[i][j]
+                acum_scores[label] += max_scores[i][j]
+                count_num_scores[label] += 1
 
         too_much_small_area = 50
         region_big = None
@@ -714,6 +756,8 @@ class Annotation(QObject):
                     c = labels_dictionary[key].fill
                     if c[0] == color[0] and c[1] == color[1] and c[2] == color[2]:
                         blob.class_name = labels_dictionary[key].name
+                        index = region.label
+                        blob.confidence = int(acum_scores[index] / count_num_scores[index])
                         break
                 if create_holes or blob.class_name != 'Empty':
                     created_blobs.append(blob)

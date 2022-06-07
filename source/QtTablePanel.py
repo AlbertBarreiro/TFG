@@ -24,6 +24,8 @@ import pandas as pd
 from source.Blob import Blob
 
 class TableModel(QAbstractTableModel):
+    confidenceChanged = pyqtSignal(int, int)
+
     def __init__(self, data):
         super(TableModel, self).__init__()
         self._data = data
@@ -59,10 +61,15 @@ class TableModel(QAbstractTableModel):
 
             return float(value)
 
+        if role == Qt.EditRole:
+            value = self._data.iloc[index.row(), index.column()]
+            return int(value)
+
     def setData(self, index, value, role):
 
         if index.isValid() and role == Qt.EditRole:
             self._data.iloc[index.row(), index.column()] = value
+            self.confidenceChanged.emit(index.row(), value)
         else:
             return False
 
@@ -91,6 +98,12 @@ class TableModel(QAbstractTableModel):
 
             if orientation == Qt.Vertical:
                 return str(self._data.index[section])
+
+    def flags(self, index):
+        if str(self._data.columns[index.column()]) == 'Confidence':
+            return Qt.ItemIsSelectable|Qt.ItemIsEnabled|Qt.ItemIsEditable
+        else:
+            return Qt.ItemIsSelectable|Qt.ItemIsEnabled
 
 class QtTablePanel(QWidget):
     selectionChanged = pyqtSignal()
@@ -188,6 +201,7 @@ height: 0px;
         
         if self.model is None:
             self.model = TableModel(self.data)
+            self.model.confidenceChanged.connect(self.confidenceChanged)
             self.sortfilter = QSortFilterProxyModel(self)
             self.sortfilter.setSourceModel(self.model)
             self.sortfilter.setSortRole(Qt.UserRole)
@@ -208,13 +222,23 @@ height: 0px;
             self.data_table.selectionModel().selectionChanged.connect(lambda x: self.selectionChanged.emit())
         else:
             self.updateTable(self.data)
+        
+    @pyqtSlot(int, int)
+    def confidenceChanged(self, row, value):
+        rowBlob = self.data.iloc[row]
+        id = rowBlob['Id']
+        blob = self.activateAnnotation.blobById(id)
+        new_blob = blob.copy()
+        new_blob.confidence = value
+
+        self.activateAnnotation.updateBlob(blob, new_blob)
 
     @pyqtSlot(Blob)
     def addBlob(self, blob):
         if self.activateAnnotation is not None:
             scale_factor = self.activeImg.pixelSize()
             area = round(blob.area * (scale_factor) * (scale_factor) / 100, 2)
-            new_row = {'Id': blob.id, 'Class': blob.class_name, 'Area':  area }
+            new_row = {'Id': blob.id, 'Class': blob.class_name, 'Area': area, 'Confidence': blob.confidence}
             self.data = self.data.append(new_row, ignore_index=True)
 
             # index is recalculated so that index i corresponds to row i
@@ -241,6 +265,7 @@ height: 0px;
                     scale_factor = self.activeImg.pixelSize()
                     self.data.loc[i, 'Area'] = round(newblob.area * (scale_factor) * (scale_factor) / 100, 2)
                     self.data.loc[i, 'Class'] = newblob.class_name
+                    self.data.loc[i, 'Confidence'] = newblob.confidence
 
             self.data_table.update()
 

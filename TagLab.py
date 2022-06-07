@@ -3880,7 +3880,7 @@ class TagLab(QMainWindow):
 
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        created_blobs = self.activeviewer.annotations.import_label_map(filename, self.project.labels, offset=[0,0],
+        created_blobs = self.activeviewer.annotations.import_label_map(filename, self.activeviewer.annotations.labels, offset=[0,0],
                                                                        scale=[1.0, 1.0], progress=self.progress_bar)
         for blob in created_blobs:
             self.activeviewer.addBlob(blob, selected=False)
@@ -4041,7 +4041,7 @@ class TagLab(QMainWindow):
 
         if self.activeviewer is not None:
 
-            histo_widget = QtHistogramWidget(self.activeviewer.annotations, self.project.labels,
+            histo_widget = QtHistogramWidget(self.activeviewer.annotations, self.activeviewer.annotations.labels,
                                              self.activeviewer.image.pixelSize(),
                                              self.activeviewer.image.acquisition_date, self.project.working_area, self)
             histo_widget.setWindowModality(Qt.WindowModal)
@@ -4099,7 +4099,7 @@ class TagLab(QMainWindow):
 
         if output_filename:
             size = QSize(self.activeviewer.image.width, self.activeviewer.image.height)
-            label_map_img = self.activeviewer.annotations.create_label_map(size, self.project.labels, None)
+            label_map_img = self.activeviewer.annotations.create_label_map(size, self.activeviewer.annotations.labels, None)
             label_map_np = utils.qimageToNumpyArray(label_map_img)
             georef_filename = self.activeviewer.image.georef_filename
             outfilename = os.path.splitext(output_filename)[0]
@@ -4159,8 +4159,8 @@ class TagLab(QMainWindow):
             target_classes = training.createTargetClasses(self.activeviewer.annotations)
             target_classes = list(target_classes.keys())
 
-            new_dataset.createLabelImage(self.project.labels)
-            new_dataset.convert_colors_to_labels(target_classes, self.project.labels)
+            new_dataset.createLabelImage(self.activeviewer.annotations.labels)
+            new_dataset.convert_colors_to_labels(target_classes, self.activeviewer.annotations.labels)
             new_dataset.computeFrequencies(target_classes)
             target_pixel_size = self.newDatasetWidget.getTargetScale()
             check_size = new_dataset.workingAreaCropAndRescale(self.activeviewer.image.pixelSize(), target_pixel_size,
@@ -4261,12 +4261,12 @@ class TagLab(QMainWindow):
         images_dir_val = os.path.join(val_folder, "images")
         labels_dir_val = os.path.join(val_folder, "labels")
 
-        print("self.project.labels",self.project.labels)
+        print("self.activeviewer.annotations.labels",self.activeviewer.annotations.labels)
         print("target_classes1",target_classes)
 
         dataset_train_info, train_loss_values, val_loss_values = training.trainingNetwork(images_dir_train, labels_dir_train,
                                                                                           images_dir_val, labels_dir_val,
-                                                                                          self.project.labels, target_classes, num_classes,
+                                                                                          self.activeviewer.annotations.labels, target_classes, num_classes,
                                                                                           save_network_as=network_filename, classifier_name=classifier_name,
                                                                                           epochs=nepochs, batch_sz=batch_size, batch_mult=4, validation_frequency=2,
                                                                                           loss_to_use="FOCAL_TVERSKY", epochs_switch=0, epochs_transition=0,
@@ -4287,7 +4287,7 @@ class TagLab(QMainWindow):
         self.progress_bar.hidePerc()
         self.progress_bar.setMessage("Test network..")
         QApplication.processEvents()
-        metrics = training.testNetwork(images_dir_test, labels_dir_test, labels_dictionary=self.project.labels,
+        metrics = training.testNetwork(images_dir_test, labels_dir_test, labels_dictionary=self.activeviewer.annotations.labels,
                                        target_classes=target_classes, dataset_train=dataset_train_info,
                                        network_filename=network_filename, output_folder=output_folder,
                                        progress=self.progress_bar)
@@ -4346,9 +4346,16 @@ class TagLab(QMainWindow):
 
     @pyqtSlot()
     def trainYourNetwork(self):
+        if self.activeviewer.annotations is None:
+            msgBox = QMessageBox()
+            msgBox.setWindowTitle(self.TAGLAB_VERSION)
+            msgBox.setText("Unable to train a network without a selected annotation")
+            msgBox.exec()
+            return
+
 
         if self.trainYourNetworkWidget is None:
-            self.trainYourNetworkWidget = QtTYNWidget(self.project.labels, self.TAGLAB_VERSION, parent=self)
+            self.trainYourNetworkWidget = QtTYNWidget(self.activeviewer.annotations.labels, self.TAGLAB_VERSION, parent=self)
             self.trainYourNetworkWidget.setWindowModality(Qt.WindowModal)
             self.trainYourNetworkWidget.launchTraining.connect(self.trainNewNetwork)
         self.trainYourNetworkWidget.show()
@@ -4465,7 +4472,7 @@ class TagLab(QMainWindow):
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         try:
-            project_to_append = loadProject(self.taglab_dir, filename, self.project.labels)
+            project_to_append = loadProject(self.taglab_dir, filename, self.activeviewer.annotations.labels)
 
         except Exception as e:
             msgBox = QMessageBox()
@@ -4604,7 +4611,7 @@ class TagLab(QMainWindow):
             pred_thresh = self.classifierWidget.sliderScores.value() / 100.0
 
             for class_name in classifier_selected['Classes']:
-                mylabel = self.project.labels.get(class_name)
+                mylabel = self.activeviewer.annotations.labels.get(class_name)
                 if class_name != 'Background' and mylabel is None:
                     msgBox = QMessageBox()
                     msgBox.setWindowTitle(self.TAGLAB_VERSION)
@@ -4618,7 +4625,7 @@ class TagLab(QMainWindow):
             self.setupProgressBar()
             QApplication.processEvents()
 
-            self.classifier = MapClassifier(classifier_selected, self.project.labels)
+            self.classifier = MapClassifier(classifier_selected, self.activeviewer.annotations.labels)
             self.classifier.updateProgress.connect(self.progress_bar.setProgress)
 
             self.progress_bar.hidePerc()
@@ -4680,7 +4687,7 @@ class TagLab(QMainWindow):
             pred_thresh = self.classifierWidget.sliderScores.value() / 100.0
 
             for class_name in classifier_selected['Classes']:
-                mylabel = self.project.labels.get(class_name)
+                mylabel = self.activeviewer.annotations.labels.get(class_name)
                 if class_name != 'Background' and mylabel is None:
                     msgBox = QMessageBox()
                     msgBox.setWindowTitle(self.TAGLAB_VERSION)
@@ -4707,7 +4714,7 @@ class TagLab(QMainWindow):
             message = "[AUTOCLASS] Automatic classification STARTS.. (classifier: )" + classifier_selected['Classifier Name']
             logfile.info(message)
 
-            self.classifier = MapClassifier(classifier_selected, self.project.labels)
+            self.classifier = MapClassifier(classifier_selected, self.activeviewer.annotations.labels)
             self.classifier.updateProgress.connect(self.progress_bar.setProgress)
 
             if self.activeviewer is None:
@@ -4715,7 +4722,7 @@ class TagLab(QMainWindow):
             else:
                 # rescaling the map to fit the target scale of the network
 
-                self.progress_bar.setMessage("Map rescaling..")
+                self.progress_bar.setMessage("Map rescaling ...")
                 QApplication.processEvents()
 
                 orthoimage = self.activeviewer.img_map
@@ -4730,21 +4737,23 @@ class TagLab(QMainWindow):
 
                 # runs the classifier
                 self.classifier.run(1026, 513, 256, prediction_threshold=pred_thresh,
-                    save_scores=False, autocolor=checkcolor,  autolevel=checklevel)
+                    save_scores=True, autocolor=checkcolor,  autolevel=checklevel)
 
                 if self.classifier.flagStopProcessing is False:
 
                     # import generated label map
                     self.progress_bar.hidePerc()
-                    self.progress_bar.setMessage("Finalizing classification results..")
+                    self.progress_bar.setMessage("Finalizing classification results ...")
                     QApplication.processEvents()
 
-                    filename = os.path.join("temp", "labelmap.png")
+                    filenameLabels = os.path.join("temp", "labelmap.png")
+                    filenameScores = os.path.join("temp", "assembled_scores.dat")
 
                     offset = self.classifier.offset
                     scale = [self.classifier.scale_factor, self.classifier.scale_factor]
-                    created_blobs = self.activeviewer.annotations.import_label_map(filename, self.project.labels,
-                                                                                   offset, scale)
+                    
+                    created_blobs = self.activeviewer.annotations.import_label_map(filenameLabels, filenameScores, self.activeviewer.annotations.labels,
+                                                                                   offset, scale, progress=self.progress_bar)
                     for blob in created_blobs:
                         self.viewerplus.addBlob(blob, selected=False)
 
@@ -4752,7 +4761,7 @@ class TagLab(QMainWindow):
 
                     self.resetAutomaticClassification()
 
-                    # save and close
+                    """# save and close
                     msgBox = QMessageBox()
                     msgBox.setWindowTitle(self.TAGLAB_VERSION)
                     msgBox.setText("Automatic classification is finished. TagLab will be close. "
@@ -4761,7 +4770,7 @@ class TagLab(QMainWindow):
 
                     self.saveAsProject()
 
-                    QApplication.quit()
+                    QApplication.quit()"""
 
                 else:
 

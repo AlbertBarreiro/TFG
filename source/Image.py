@@ -162,7 +162,7 @@ class Image(object):
         '''
         Creates an empty data table for the label panel
         '''
-        df = pd.DataFrame({}, columns=['Id', 'Class', 'Area'])
+        df = pd.DataFrame({}, columns=['Id', 'Class', 'Area', 'Confidence'])
         return df
 
 
@@ -190,6 +190,7 @@ class Image(object):
                 'Id': np.zeros(number_of_seg, dtype=np.int),
                 'Class': [],
                 'Area': np.zeros(number_of_seg),
+                'Confidence': np.zeros(number_of_seg, dtype=np.int),
                 #'Surf. area': np.zeros(number_of_seg)
             }
 
@@ -197,11 +198,12 @@ class Image(object):
                 dict['Id'][i] = blob.id
                 dict['Class'].append(blob.class_name)
                 dict['Area'][i] = round(blob.area * (scale_factor) * (scale_factor) / 100, 2)
+                dict['Confidence'][i] = blob.confidence
     #            if blob.surface_area > 0.0:
     #                dict['Surf. area'][i] = round(blob.surface_area * (scale_factor) * (scale_factor) / 100, 2)
             # create dataframe
             #df = pd.DataFrame(dict, columns=['Id', 'Class', 'Area', 'Surf. area'])
-            df = pd.DataFrame(dict, columns=['Id', 'Class', 'Area'])
+            df = pd.DataFrame(dict, columns=['Id', 'Class', 'Area', 'Confidence'])
             annotations.cache_data_table = df
 
             annotations.table_needs_update = False
