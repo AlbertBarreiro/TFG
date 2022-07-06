@@ -408,7 +408,7 @@ class Ritm(Tool):
             brush = QBrush(Qt.SolidPattern)
             brush.setColor(Qt.white)
         else:
-            brush = self.viewerplus.project.classBrushFromName(self.blob_to_correct)
+            brush = self.viewerplus.annotations.classBrushFromName(self.blob_to_correct)
 
         brush.setStyle(Qt.Dense4Pattern)
 

@@ -737,7 +737,10 @@ class Annotation(QObject):
         created_blobs = []
         num_iter = 0
         total_iter = len(measure.regionprops(labels))
-        modul = int(total_iter/25)
+        
+        modul = total_iter
+        if total_iter > 25:
+            modul = int(total_iter/25)
 
         for region in measure.regionprops(labels):
             if num_iter % modul == 0:
@@ -758,6 +761,70 @@ class Annotation(QObject):
                         blob.class_name = labels_dictionary[key].name
                         index = region.label
                         blob.confidence = int(acum_scores[index] / count_num_scores[index])
+                        break
+                if create_holes or blob.class_name != 'Empty':
+                    created_blobs.append(blob)
+
+            num_iter += 1
+        updateProgressBar(progress, "Loading label image: ", num_iter, total_iter)
+        return created_blobs
+
+    def import_label_mapNoScores(self, filenameLabels, labels_dictionary, offset, scale, progress, create_holes=False):
+        """
+        It imports a label map and create the corresponding blobs without Scores.
+        The offset is stored as a [top, left] coordinates and scale are the scale factors of X and Y axis respectively.
+        """
+        qimg_label_map = QImage(filenameLabels)
+        qimg_label_map = qimg_label_map.convertToFormat(QImage.Format_RGB32)
+
+
+
+        # label map rescaling (if necessary)
+        w_rescaled = round(qimg_label_map.width() * scale[0])
+        h_rescaled = round(qimg_label_map.height() * scale[1])
+        qimg_label_map = qimg_label_map.scaled(w_rescaled, h_rescaled, Qt.IgnoreAspectRatio, Qt.FastTransformation)
+
+
+        label_map = utils.qimageToNumpyArray(qimg_label_map)
+        label_map = label_map.astype(np.int32)
+        
+
+        # RGB -> label code association (ok, it is a dirty trick but it saves time...)
+        label_coded = label_map[:, :, 0] + (label_map[:, :, 1] << 8) + (label_map[:, :, 2] << 16)
+
+        labels, num_labels = measure.label(label_coded, connectivity=1, return_num=True)
+
+        too_much_small_area = 50
+        region_big = None
+
+        offset_x = offset[1]
+        offset_y = offset[0]
+        created_blobs = []
+        num_iter = 0
+        total_iter = len(measure.regionprops(labels))
+        
+        modul = total_iter
+        if total_iter > 25:
+            modul = int(total_iter/25)
+
+        for region in measure.regionprops(labels):
+            if num_iter % modul == 0:
+                updateProgressBar(progress, "Loading label image: ", num_iter, total_iter)
+            if region.area > too_much_small_area:
+
+                id = len(self.seg_blobs)
+
+                blob = Blob(region, offset_x, offset_y, self.getFreeId())
+
+                # assign class
+                row = region.coords[0, 0]
+                col = region.coords[0, 1]
+                color = label_map[row, col]
+                for key in labels_dictionary.keys():
+                    c = labels_dictionary[key].fill
+                    if c[0] == color[0] and c[1] == color[1] and c[2] == color[2]:
+                        blob.class_name = labels_dictionary[key].name
+                        index = region.label
                         break
                 if create_holes or blob.class_name != 'Empty':
                     created_blobs.append(blob)

@@ -3890,7 +3890,7 @@ class TagLab(QMainWindow):
 
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        created_blobs = self.activeviewer.annotations.import_label_map(filename, self.activeviewer.annotations.labels, offset=[0,0],
+        created_blobs = self.activeviewer.annotations.import_label_mapNoScores(filename, self.activeviewer.annotations.labels, offset=[0,0],
                                                                        scale=[1.0, 1.0], progress=self.progress_bar)
         for blob in created_blobs:
             self.activeviewer.addBlob(blob, selected=False)

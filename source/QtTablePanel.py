@@ -234,10 +234,11 @@ height: 0px;
         rowBlob = self.data.iloc[row]
         id = rowBlob['Id']
         blob = self.activateAnnotation.blobById(id)
-        new_blob = blob.copy()
-        new_blob.confidence = value
+        blob.confidence = value
+        #new_blob = blob.copy()
+        #new_blob.confidence = value
 
-        self.activateAnnotation.updateBlob(blob, new_blob)
+        #self.activateAnnotation.updateBlob2(blob, new_blob)
 
     @pyqtSlot(Blob)
     def addBlob(self, blob):
