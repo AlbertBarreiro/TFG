@@ -23,7 +23,7 @@ class Ritm(Tool):
 
         self.points = corrective_points
         self.ritm_net = None
-        self.MAX_POINTS = 10
+        self.MAX_POINTS = 50  # changed 10 -> 50
 
         self.clicker = clicker.Clicker() #handles clicked point (original code of ritm)
         self.predictor = None
@@ -410,7 +410,7 @@ class Ritm(Tool):
         else:
             brush = self.viewerplus.annotations.classBrushFromName(self.blob_to_correct)
 
-        brush.setStyle(Qt.Dense4Pattern)
+        brush.setStyle(Qt.Dense7Pattern) # changed: 4 -> 7
 
         blob.qpath_gitem = scene.addPath(blob.qpath, pen, brush)
         blob.qpath_gitem.setZValue(1)

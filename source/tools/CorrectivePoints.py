@@ -12,7 +12,7 @@ class CorrectivePoints(object):
         self.positive_points = []
         self.negative_points = []
         self.markers = []
-        self.RADIUS = 7
+        self.RADIUS = 5 # changed
         self.scene = scene
         self.pos_neg_clicks = []
 

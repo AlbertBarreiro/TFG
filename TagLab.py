@@ -133,7 +133,7 @@ class TagLab(QMainWindow):
 
         ##### CUSTOM STYLE #####
 
-        self.setStyleSheet("background-color: rgb(55,55,55); color: white")
+        self.setStyleSheet("background-color: rgb(75,55,55); color: white")
 
         current_version, _ = self.checkNewVersion()
         #if need_to_update:
@@ -144,7 +144,7 @@ class TagLab(QMainWindow):
 
         self.taglab_dir = os.getcwd()
 
-        self.TAGLAB_VERSION = "TagLab " + current_version
+        self.TAGLAB_VERSION = "MuralTagLab (based on TagLab, https://taglab.isti.cnr.it/)" # + current_version
 
         print(self.TAGLAB_VERSION)
 
@@ -168,7 +168,7 @@ class TagLab(QMainWindow):
         self.map_acquisition_date = None #"YYYY-MM-DD"
 
         self.recentFileActs = []  #refactor to self.maxRecentProjects
-        self.maxRecentFiles = 4   #refactor to maxRecentProjects
+        self.maxRecentFiles = 0   #refactor to maxRecentProjects # added
         self.separatorRecentFilesAct = None    #refactor to separatorRecentFiles
 
         ##### INTERFACE #####
@@ -234,6 +234,12 @@ class TagLab(QMainWindow):
         self.pxmapSeparator2 = QPixmap("icons/separator.png")
         self.labelSeparator2 = QLabel()
         self.labelSeparator2.setPixmap(self.pxmapSeparator2.scaled(QSize(35, 30)))
+        
+        self.pxmapSeparator3 = QPixmap("icons/separator.png")
+        self.labelSeparator3 = QLabel()
+        self.labelSeparator3.setPixmap(self.pxmapSeparator3.scaled(QSize(35, 30)))
+
+        
 
         self.btnSplitScreen = self.newButton("split.png", "Split screen", flatbuttonstyle1, self.toggleComparison)
         self.btnAutoMatch = self.newButton("automatch.png", "Compute automatic matches", flatbuttonstyle1, self.autoCorrespondences)
@@ -245,17 +251,25 @@ class TagLab(QMainWindow):
         layout_tools = QVBoxLayout()
         layout_tools.setSpacing(0)
         layout_tools.addWidget(self.btnMove)
+        layout_tools.addSpacing(3)
+        layout_tools.addWidget(self.labelSeparator)
+        layout_tools.addSpacing(3)
+        layout_tools.addWidget(self.btnFreehand)
+        layout_tools.addWidget(self.btnEditBorder)
+        layout_tools.addWidget(self.btnCut)
+        layout_tools.addSpacing(3)
+        layout_tools.addWidget(self.labelSeparator3)
+        layout_tools.addSpacing(3)
         layout_tools.addWidget(self.btnDeepExtreme)
         layout_tools.addWidget(self.btnRitm)
-        layout_tools.addWidget(self.btnFreehand)
+        layout_tools.addSpacing(3)
         layout_tools.addWidget(self.btnAssign)
         #layout_tools.addWidget(self.btnWatershed)
         #layout_tools.addWidget(self.btnBricksSegmentation)
-        layout_tools.addWidget(self.btnEditBorder)
-        layout_tools.addWidget(self.btnCut)
-        layout_tools.addWidget(self.btnCreateCrack)
+        
+        #layout_tools.addWidget(self.btnCreateCrack) # removed
         #layout_tools.addWidget(self.btnSplitBlob)
-        layout_tools.addWidget(self.btnRuler)
+        #layout_tools.addWidget(self.btnRuler) # removed
         layout_tools.addWidget(self.btnAutoClassification)
         layout_tools.addSpacing(3)
         layout_tools.addWidget(self.labelSeparator)
@@ -505,7 +519,7 @@ class TagLab(QMainWindow):
 
 
         #DOCK
-        self.layersdock = QDockWidget("Layers", self)
+        self.layersdock = QDockWidget("Maps and Layers", self)
         self.layersdock.setWidget(self.layers_widget)
         self.layers_widget.setStyleSheet("padding: 0px")
         self.layersdock.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
@@ -515,7 +529,7 @@ class TagLab(QMainWindow):
         self.labelsdock.setWidget(self.groupbox_labels)
         self.groupbox_labels.setStyleSheet("padding: 0px")
 
-        self.datadock = QDockWidget("Data Table", self)
+        self.datadock = QDockWidget("Regions", self)  # old: Data Table
         self.datadock.setWidget(self.groupbox_comparison)
         self.groupbox_comparison.setStyleSheet("padding: 0px")
 
@@ -527,7 +541,7 @@ class TagLab(QMainWindow):
         self.mapdock.setWidget(self.mapviewer)
         self.mapdock.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.MinimumExpanding)
 
-        for dock in (self.labelsdock, self.layersdock, self.datadock, self.blobdock, self.mapdock):
+        for dock in (self.layersdock, self.labelsdock, self.datadock, self.blobdock): #, self.mapdock):
             dock.setAllowedAreas(Qt.RightDockWidgetArea)
             self.addDockWidget(Qt.RightDockWidgetArea, dock)
 
@@ -900,7 +914,7 @@ class TagLab(QMainWindow):
         newMapAct.setStatusTip("Add a new map to the project")
         newMapAct.triggered.connect(self.setMapToLoad)
 
-        projectEditorAct = QAction("Maps Editor...", self)
+        projectEditorAct = QAction("Edit Map Data...", self)
         projectEditorAct.setShortcut('Ctrl+L')
         projectEditorAct.setStatusTip("Open project editor dialog")
         projectEditorAct.triggered.connect(self.openProjectEditor)
@@ -910,10 +924,10 @@ class TagLab(QMainWindow):
         createDicAct = QAction("Labels Dictionary Editor...", self)
         createDicAct.triggered.connect(self.createDictionary)
 
-        createDcyAnnotation = QAction("Create decay annotation", self)
+        createDcyAnnotation = QAction("Add Decay Annotation Layer", self)
         createDcyAnnotation.triggered.connect(self.createDecayAnnotationLayer)
 
-        createColorAnnotation = QAction("Create color annotation", self)
+        createColorAnnotation = QAction("Add Color Annotation Layer", self)
         createColorAnnotation.triggered.connect(self.createColorAnnotationLayer)
 
         regionAttributesAct = QAction("Region Attributes...", self)
@@ -936,6 +950,11 @@ class TagLab(QMainWindow):
         importShap.triggered.connect(self.importShapefile)
 
         ### EXPORT
+
+
+        exportW3CAct = QAction("Export W3C annotation model (JSON)", self)
+        exportW3CAct.setStatusTip("Export W3C annotation model (JSON)")
+        exportW3CAct.triggered.connect(self.exportAnnAsW3C)
 
         exportDataTableAct = QAction("Export Annotations As Data Table", self)
         #exportDataTableAct.setShortcut('Ctrl+??')
@@ -1033,10 +1052,11 @@ class TagLab(QMainWindow):
         self.submenuImport.addAction(appendAct)
         self.filemenu.addSeparator()
         self.submenuExport = self.filemenu.addMenu("Export")
+        self.submenuExport.addAction(exportW3CAct)
         self.submenuExport.addAction(exportDataTableAct)
         self.submenuExport.addAction(exportMapAct)
-        self.submenuExport.addAction(exportShapefilesAct)
-        self.submenuExport.addAction(exportGeoRefLabelMapAct)
+        #self.submenuExport.addAction(exportShapefilesAct)
+        #self.submenuExport.addAction(exportGeoRefLabelMapAct)
         self.submenuExport.addAction(exportHistogramAct)
         self.submenuExport.addAction(exportTrainingDatasetAct)
         self.filemenu.addSeparator()
@@ -1051,12 +1071,12 @@ class TagLab(QMainWindow):
         self.projectmenu.addAction(newMapAct)
         self.projectmenu.addAction(projectEditorAct)
         self.projectmenu.addSeparator()
+        self.projectmenu.addAction(createDcyAnnotation)
+        self.projectmenu.addAction(createColorAnnotation)
+        self.projectmenu.addSeparator()
         self.projectmenu.addAction(setWorkingAreaAct)
         self.projectmenu.addSeparator()
         self.projectmenu.addAction(createDicAct)
-        self.projectmenu.addSeparator()
-        self.projectmenu.addAction(createDcyAnnotation)
-        self.projectmenu.addAction(createColorAnnotation)
         self.projectmenu.addSeparator()
         self.projectmenu.addAction(regionAttributesAct)
 
@@ -1143,8 +1163,8 @@ class TagLab(QMainWindow):
 
 
         self.viewmenu = menubar.addMenu("&View")
-        self.viewmenu.addAction(self.labelsdock.toggleViewAction())
         self.viewmenu.addAction(self.layersdock.toggleViewAction())
+        self.viewmenu.addAction(self.labelsdock.toggleViewAction())
         self.viewmenu.addAction(self.blobdock.toggleViewAction())
         self.viewmenu.addAction(self.mapdock.toggleViewAction())
         self.viewmenu.addAction(self.datadock.toggleViewAction())
@@ -1711,7 +1731,7 @@ class TagLab(QMainWindow):
 
         self.compare_panel.hide()
         self.data_panel.show()
-        self.datadock.setWindowTitle("Data table")
+        self.datadock.setWindowTitle("Regions")
 
         self.comboboxTargetImage.hide()
         self.blobdock.show()
@@ -2367,10 +2387,10 @@ class TagLab(QMainWindow):
     def setTool(self, tool):
         tools = {
             "MOVE"         : ["Pan"          , self.btnMove],
-            "CREATECRACK"  : ["Crack"        , self.btnCreateCrack],
-            "ASSIGN"       : ["Assign"       , self.btnAssign],
             "EDITBORDER"   : ["Edit Border"  , self.btnEditBorder],
             "CUT"          : ["Cut"          , self.btnCut],
+            "CREATECRACK"  : ["Crack"        , self.btnCreateCrack],
+            "ASSIGN"       : ["Assign"       , self.btnAssign],
             "FREEHAND"     : ["Freehand"     , self.btnFreehand],
             "WATERSHED"    : ["Watershed"    , self.btnWatershed],
             "BRICKS":        ["Bricks",        self.btnBricksSegmentation],
@@ -3047,7 +3067,11 @@ class TagLab(QMainWindow):
         logfile.info("[PROJECT] A new project has been setup.")
         self.groupbox_blobpanel.region_attributes = self.project.region_attributes
 
-
+        # added 
+        self.setMapToLoad()
+        
+        
+        
 
     @pyqtSlot()
     def editProject(self):
@@ -3074,6 +3098,8 @@ class TagLab(QMainWindow):
             self.mapWidget.setWindowModality(Qt.WindowModal)
             self.mapWidget.accepted.connect(self.setMapProperties)
             self.mapWidget.show()
+            
+            
 
         else:
 
@@ -3083,6 +3109,8 @@ class TagLab(QMainWindow):
             self.mapWidget.accepted.connect(self.setMapProperties)
             if self.mapWidget.isHidden():
                 self.mapWidget.show()
+    
+        
 
     @pyqtSlot()
     def closeProjectEditor(self):
@@ -4020,6 +4048,27 @@ class TagLab(QMainWindow):
             return
 
     @pyqtSlot()
+    def exportAnnAsW3C(self):  # added
+
+        if self.activeviewer.image is None:
+            box = QMessageBox()
+            box.setText("A map is needed to export labels. Load a map or a project.")
+            box.exec()
+            return
+
+        filters = "JSON (*.json) ;; All Files (*)"
+        filename, _ = QFileDialog.getSaveFileName(self, "Output file", "../" + self.activeviewer.image.name + ".json", filters)
+
+        if filename:
+            self.activeviewer.annotations.export_W3C(self.project, self.activeviewer.image, filename)
+            msgBox = QMessageBox(self)
+            msgBox.setWindowTitle(self.TAGLAB_VERSION)
+            msgBox.setText("Annotations exported successfully!")
+            msgBox.exec()
+            return
+
+
+    @pyqtSlot()
     def exportAnnAsMap(self):
 
         if self.activeviewer:
@@ -4440,16 +4489,17 @@ class TagLab(QMainWindow):
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
         #TODO check if loadProject actually works!
-        try:
+        if True: #try:
+            print(self.taglab_dir, filename, self.default_dictionary)
             self.project = loadProject(self.taglab_dir, filename, self.default_dictionary)
-        except:
+        else: #except:
             box = QMessageBox()
             box.setWindowTitle('Failed loading the project')
             box.setText("Could not load the file " + filename)
             box.exec()
             return
-        finally:
-            QApplication.restoreOverrideCursor()
+        #finally:
+        #    QApplication.restoreOverrideCursor()
 
 
         self.setProjectTitle(self.project.filename)
