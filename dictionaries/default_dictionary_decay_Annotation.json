@@ -1,6 +1,6 @@
 {
-  "Name": "scripps",
-  "Description": "These color codes are the ones typically used by the Scripps Institution of Oceanography (UCSD)",
+  "Name": "labels_decay_annotation",
+  "Description": "These color codes are used for decay annotations",
   "Labels": [
     {
       "id": "Empty",
