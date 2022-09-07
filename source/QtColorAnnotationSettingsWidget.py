@@ -67,6 +67,9 @@ class QtColorAnnotationSettingsWidget(QWidget):
         self.btn_add = QPushButton("Add >>")
         self.btn_add.clicked.connect(self.addLabel)
 
+        self.btn_add_all = QPushButton("Add all >>")
+        self.btn_add_all.clicked.connect(self.addAllLabel)
+
         self.btn_remove = QPushButton("<< Remove")
         self.btn_remove.clicked.connect(self.removeLabel)
 
@@ -76,6 +79,7 @@ class QtColorAnnotationSettingsWidget(QWidget):
         self.layoutButtons = QVBoxLayout()
         self.layoutButtons.addItem(verticalSpacer1)
         self.layoutButtons.addWidget(self.btn_add)
+        self.layoutButtons.addWidget(self.btn_add_all)
         self.layoutButtons.addWidget(self.btn_remove)
         self.layoutButtons.addItem(verticalSpacer2)
 
@@ -267,6 +271,22 @@ class QtColorAnnotationSettingsWidget(QWidget):
 
             self.labelsL.pop(index)
             self.createAllLabels(True)
+
+    def addAllLabel(self):
+        if self.selectedL is not None:
+            index = self.label_nameL.index(self.selectedL)
+            move_label_name = self.label_nameL[index]
+            move_label_name.setStyleSheet("border: none; color: lightgray;")
+
+        for index in range(len(self.labelsL)):
+            move_label = self.labelsL[index]
+            move_label_name = self.label_nameL[index]
+            move_label_color = self.label_colorL[index]
+            self.addLabelScrollR(move_label, move_label_name, move_label_color)
+
+        self.labelsL = []
+        self.createAllLabels(True)
+
     
     def removeLabel(self):
         if self.selectedR is not None:
