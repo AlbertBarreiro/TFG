@@ -7,21 +7,22 @@ from source.Label import Label
 
 class DecayAnnotation(Annotation):
 
-
-
-    def __init__(self):
-        super(DecayAnnotation,self).__init__()
-        self.name = "Decay Annotation"
-        
-        self.dictionary_name = ""
-        self.dictionary_description = ""
-        self.labels = {}
-
-        settings_widget = QtSettingsWidget( os.getcwd())
-        default_dict_decayAnnotatio = settings_widget.settings.value("default-dictionary",
-                                                defaultValue="dictionaries/default_dictionary_decay_Annotation.json", type=str)
-        
-        self.loadDictionary(default_dict_decayAnnotatio)
+    def __init__(self, name = "Decay Annotation", id = -1, dictionary_name = "", dictionary_description = "", labels = {}):
+        super(DecayAnnotation,self).__init__(name, id)
+        self.name = name
+        self.type = "DecayAnnotation"
+                
+        if len(labels) == 0:
+            settings_widget = QtSettingsWidget( os.getcwd())
+            default_dict_decayAnnotatio = settings_widget.settings.value("default-dictionary",
+                                                    defaultValue="dictionaries/default_dictionary_decay_Annotation.json", type=str)
+            
+            self.loadDictionary(default_dict_decayAnnotatio)
+        else:
+            self.dictionary_name = dictionary_name
+            self.dictionary_description = dictionary_description
+            for label in labels:
+                self.labels[label] = Label(**labels[label])
 
     def loadDictionary(self, filename):
 

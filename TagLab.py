@@ -3192,13 +3192,13 @@ class TagLab(QMainWindow):
 
         self.color_widget = QtColorAnnotationSettingsWidget(parent = self)
         self.color_widget.setWindowModality(Qt.WindowModal)
-        self.color_widget.create[list].connect(self.createColorAnnotation)
+        self.color_widget.create[dict].connect(self.createColorAnnotation)
 
         self.color_widget.show()
 
-    @pyqtSlot(list)
+    @pyqtSlot(dict)
     def createColorAnnotation(self, labels):
-        #map_labels = {label.name:label for label in labels}
+
         image = self.activeviewer.image
         image.addNewColorAnnotationLayer(labels)
         #self.updateToolStatus()
@@ -3606,7 +3606,7 @@ class TagLab(QMainWindow):
                     self.clearPanelsWithAnnotations()
                 else:
                     viewerChanged.setAnnotations(annotations)
-                    self.toggleAnnotations(image, enable) # need to activate blobs first
+                    self.toggleAnnotations(image, enable) # activate blobs first
                     self.updatePanelsWithAnnotations(viewerChanged)
             else:
                 self.toggleAnnotations(image, enable)

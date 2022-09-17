@@ -56,14 +56,21 @@ class Annotation(QObject):
     blobUpdated = pyqtSignal(Blob,Blob)
     blobClassChanged = pyqtSignal(str,Blob)
 
-    def __init__(self):
+    def __init__(self, name = "Annotation", id = -1):
         super(QObject, self).__init__()
 
         #refactor: rename this to blobs.
         # list of all blobs
         self.seg_blobs = []
-        self.id = str(uuid.uuid4())
-        self.name = "Annotation"
+
+        if id == -1:
+            self.id = str(uuid.uuid4())
+        else:
+            self.id = id
+
+        self.name = name
+
+        self.type = "" #describes which type of annotation is
         
         #relative weight of depth map for refine borders
         #refactor: this is to be saved and loaded in qsettings
@@ -76,6 +83,12 @@ class Annotation(QObject):
         self.table_needs_update = True
         self.cache_data_table = None
         self.cache_labels_table = None
+
+    @classmethod
+    def get_annotation_type(cls, attributes):
+        for c in cls.__subclasses__():
+            if c.__name__ == attributes['type']:
+                return c(attributes["name"], attributes["id"], attributes["dictionary_name"], attributes["dictionary_description"], attributes["labels"])
 
     def classBrushFromName(self, blob):
         brush = QBrush()
@@ -103,9 +116,12 @@ class Annotation(QObject):
         dictionary = json.load(f)
         f.close()
 
-        self.dictionary_name = dictionary['Name']
-        self.dictionary_description = dictionary['Description']
-        labels = dictionary['Labels']
+        self.setDictionaryFromDictLabels(dictionary['Name'], dictionary['Description'], dictionary['Labels'])
+
+
+    def setDictionaryFromDictLabels(self, dictionary_name, dictionary_description, labels):
+        self.dictionary_name = dictionary_name
+        self.dictionary_description = dictionary_description
 
         self.labels = {}
         for label in labels:
@@ -190,7 +206,15 @@ class Annotation(QObject):
         return [blob for blob in self.seg_blobs if blob.genet == genet]
 
     def save(self):
-        return self.seg_blobs
+        data = self.__dict__.copy()
+        
+        del data["refine_depth_weight"]
+        del data["refine_conservative"]
+        del data["table_needs_update"]
+        del data["cache_data_table"]
+        del data["cache_labels_table"]
+
+        return data
 
     #move to BLOB!
     def blobsFromMask(self, seg_mask, map_pos_x, map_pos_y, area_mask):

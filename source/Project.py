@@ -145,12 +145,17 @@ class Project(object):
         self.correspondences = {}
         if correspondences is not None:
             for key in correspondences.keys():
-                source = correspondences[key]['source']
-                target = correspondences[key]['target']
-                source_im = self.getImageFromId(source)
-                source_annotations = source_im.decayLayers[0]   # TODO cuando se guarden correspondencias con la anotacion en concreto habra que cambiarlo
-                target_im = self.getImageFromId(target)
-                target_annotations = target_im.decayLayers[0]
+                source_id = correspondences[key]['source']
+                source_annotations_id = correspondences[key]['source_annotations']
+                target_id = correspondences[key]['target']
+                target_annotations_id = correspondences[key]['target_annotations']
+
+                source_im = self.getImageFromId(source_id)
+                source_annotations = source_im.getAnnotationfromID(source_annotations_id)
+
+                target_im = self.getImageFromId(target_id)
+                target_annotations = target_im.getAnnotationfromID(target_annotations_id)
+
                 self.correspondences[key] = Correspondences(source_im, source_annotations, target_im, target_annotations)
                 self.correspondences[key].fillTable(correspondences[key]['correspondences'])
 

@@ -106,7 +106,7 @@ class Correspondences(object):
                 self.data.loc[index, 'Area2'] = self.area_in_sq_cm(blob2.area, False)
 
     def save(self):
-        return { "source": self.source.id, "target": self.target.id, "correspondences": self.data.values.tolist() }
+        return { "source": self.source.id, "source_annotations": self.source_annotations.id, "target": self.target.id, "target_annotations": self.target_annotations.id, "correspondences": self.data.values.tolist() }
 
     def sort_data(self):
 
@@ -157,9 +157,11 @@ class Correspondences(object):
     def addBlob(self, image, blob):
 
         if self.source == image:
-            self.set([blob], [])
+            if blob.id not in self.data.Blob1.values:
+                self.set([blob], [])
         else:
-            self.set([], [blob])
+            if blob.id not in self.data.Blob2.values:
+                self.set([], [blob])
 
     def removeBlob(self, image, blob):
         if self.source == image:

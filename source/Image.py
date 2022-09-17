@@ -13,7 +13,7 @@ class Image(object):
     def __init__(self, rect = [0.0, 0.0, 0.0, 0.0],
         map_px_to_mm_factor = 1.0, width = None, height = None, channels = [], id = None, name = None,
         acquisition_date = "",
-        georef_filename = "", workspace = [], metadata = {}, annotationsList =  [], layers = [],
+        georef_filename = "", workspace = [], metadata = {}, annotationLayers =  [], layers = [],
                  grid = {}, export_dataset_area = []):
 
         #we have to select a standanrd enforced!
@@ -28,17 +28,18 @@ class Image(object):
         self.width = width
         self.height = height                                     #in pixels!
 
+
         self.annotationLayers = []
-        if len(annotationsList) == 0:
+        if len(annotationLayers) == 0:
             self.annotationLayers.append(DecayAnnotation())
         else:
-            for annotations in annotationsList:
-                annotationFilled = Annotation() # TODO dependiendo de tipo de anotacion tenemos que crear un tipo u otro. Cuando se haga el guardado lo miramos
-                for annotation_data in annotations:
+            for annotations in annotationLayers:
+                annotationFilled = Annotation.get_annotation_type(annotations)
+                for seg_blob in annotations["seg_blobs"]:
                     blob = Blob(None, 0, 0, 0)
-                    blob.fromDict(annotation_data["blob"])
+                    blob.fromDict(seg_blob)
                     annotationFilled.addBlob(blob)
-                    annotationFilled.id = annotation_data["id"]
+                
                 self.annotationLayers.append(annotationFilled)
 
         self.layers = []
@@ -73,7 +74,9 @@ class Image(object):
         self.annotationLayers.append(DecayAnnotation())
 
     def addNewColorAnnotationLayer(self,labels):
-        self.annotationLayers.append(ColorAnnotation(labels))
+        colorannot = ColorAnnotation()
+        colorannot.setDictionaryFromListOfLabels(labels["name"], labels["description"], labels["labels"])
+        self.annotationLayers.append(colorannot)
 
     def deleteLayer(self, layer):
         self.layers.remove(layer)
@@ -265,6 +268,12 @@ class Image(object):
 
     def getAnnotationPosition(self, annotations):
         return self.annotationLayers.index(annotations)
+    
+    def getAnnotationfromID(self, annotation_id):
+        for annotation in self.annotationLayers:
+            if annotation.id == annotation_id:
+                return annotation
+        return None
 
     def save(self):
         data = self.__dict__.copy()

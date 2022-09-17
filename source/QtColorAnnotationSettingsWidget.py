@@ -11,7 +11,7 @@ from source.Label import Label
 
 class QtColorAnnotationSettingsWidget(QWidget):
 
-    create = pyqtSignal(list)
+    create = pyqtSignal(dict)
     def __init__(self, parent=None):
         super(QtColorAnnotationSettingsWidget, self).__init__(parent)
 
@@ -337,6 +337,8 @@ class QtColorAnnotationSettingsWidget(QWidget):
         label_name.append(new_label_name)
         label_color.append(new_label_color)
 
+        self.selectedL = None
+
 
     @pyqtSlot()
     def addLabelScrollL(self, new_label, new_label_name, new_label_color):
@@ -371,9 +373,11 @@ class QtColorAnnotationSettingsWidget(QWidget):
         tempWidget.setLayout(labels_layout)
         scroll.setWidget(tempWidget)
 
+        self.selectedR = None
+
     
     def createAnnotation(self):
-        self.create.emit(self.labelsR)
+        self.create.emit({"name":self.dictionary_name, "description":self.dictionary_description, "labels":self.labelsR})
 
         self.close()
 

@@ -460,7 +460,6 @@ class Blob(object):
         self.perimeter = dict["perimeter"]
 
 
-        #inner_contours = dict["inner contours"]
         self.contour = self.toContour(dict["contour"])
         inner_contours = dict["inner contours"]
         self.inner_contours = []
