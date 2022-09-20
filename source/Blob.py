@@ -459,6 +459,8 @@ class Blob(object):
         self.area = dict["area"]
         self.perimeter = dict["perimeter"]
 
+        self.confidence = dict["confidence"]
+
 
         self.contour = self.toContour(dict["contour"])
         inner_contours = dict["inner contours"]
@@ -524,6 +526,8 @@ class Blob(object):
         dict["centroid"] = [math.trunc(10 * v) / 10 for v in self.centroid.tolist()]
         dict["area"] = self.area
         dict["perimeter"] = math.trunc(10 *self.perimeter)/10;
+
+        dict["confidence"] = self.confidence
 
         #dict["contour"] = self.contour.tolist()
         dict["contour"] = self.toPoints(self.contour)
