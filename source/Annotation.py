@@ -957,6 +957,122 @@ class Annotation(QObject):
         df = pd.DataFrame(dict, columns=list(dict.keys()))
         df.to_csv(filename, sep=',', index=False)
 
+    def export_W3C(self, project, image, filename):
+
+        working_area = project.working_area
+        scale_factor = image.pixelSize()
+        date = image.acquisition_date
+
+        # create a list of instances
+        name_list = []
+
+        if working_area is None:
+            # all the blobs are considered
+            self.blobs = self.seg_blobs
+        else:
+            # only the blobs inside the working area are considered
+            self.blobs = self.calculate_inner_blobs(working_area)
+
+        visible_blobs = []
+        for blob in self.blobs:
+            if blob.qpath_gitem.isVisible():
+                index = blob.blob_name
+                name_list.append(index)
+                visible_blobs.append(blob)
+
+        number_of_seg = len(name_list)
+        dict = {
+            'TagLab Region id': np.zeros(number_of_seg, dtype = np.int64),
+            'TagLab Date': [],
+            'TagLab Class name': [],
+            'TagLab Genet id': np.zeros(number_of_seg, dtype = np.int64),
+            'TagLab Centroid x': np.zeros(number_of_seg),
+            'TagLab Centroid y': np.zeros(number_of_seg),
+            'TagLab Area': np.zeros(number_of_seg),
+            'TagLab Surf. area': np.zeros(number_of_seg),
+            'TagLab Perimeter': np.zeros(number_of_seg),
+            'TagLab Note': [] }
+
+        '''
+        for attribute in project.region_attributes.data:
+            key = attribute["name"]
+            if attribute['type'] in ['string', 'keyword']:
+                dict[key] = []
+            # elif attribute['type'] in ['number', 'boolean']:
+            elif attribute['type'] in ['integer number']:
+                dict[key] = np.zeros(number_of_seg, dtype=np.int64)
+            elif attribute['type'] in ['decimal number']:
+                dict[key] = np.zeros(number_of_seg, dtype=np.float64)
+            else:
+                # unknown attribute type, not saved
+                pass
+        '''
+        
+        '''
+        {type: 'TextualBody', value: 'comm', purpose: 'commenting'}purpose: "commenting"type: "TextualBody"value: "comm"[[Prototype]]: Object
+window.my.body[1]
+{type: 'TextualBody', value: 'tag', purpose: 'tagging'}
+window.my.target.selector
+{type: 'SvgSelector', value: '<svg><polygon points="819,189 669,311 975,497 1083,243"></polygon></svg>'}
+        '''
+        STEP = 4 # save one every 8 points
+        
+        for i, blob in enumerate(visible_blobs):
+            points = [] 
+            print(blob.class_name, blob.note, blob.id)
+            for j in range(0, blob.contour.shape[0], STEP):
+                x, y = blob.contour[j, 0] + 0.5, blob.contour[j, 1] + 0.5
+                points.append((x,y))
+            
+            P = ""
+            for p in points: P += f"{int(p[0])},{int(p[1])} "
+            print(f'<svg><polygon points="{P}"></polygon></svg>')
+            
+            dict['TagLab Region id'][i] = blob.id
+            dict['TagLab Date'].append(date)
+            dict['TagLab Class name'].append(blob.class_name)
+            dict['TagLab Centroid x'][i] = round(blob.centroid[0], 1)
+            dict['TagLab Centroid y'][i] = round(blob.centroid[1], 1)
+            dict['TagLab Area'][i] = round(blob.area * (scale_factor) * (scale_factor)/ 100,2)
+            if blob.surface_area > 0.0:
+               dict['TagLab Surf. area'][i] = round(blob.surface_area * (scale_factor) * (scale_factor) / 100, 2)
+            dict['TagLab Perimeter'][i] = round(blob.perimeter*scale_factor / 10,1)
+
+            if blob.genet is not None:
+               dict['TagLab Genet id'][i] = blob.genet
+
+            dict['TagLab Note'].append(blob.note)
+
+            for attribute in project.region_attributes.data:
+
+                key = attribute["name"]
+
+                try:
+                    value = blob.data[key]
+                except:
+                    value = None
+
+                if attribute['type'] == 'integer number':
+
+                    if value is not None:
+                        dict[key][i] = value
+                    else:
+                        dict[key][i] = 0
+
+                elif attribute['type'] == 'decimal number':
+
+                    if value is not None:
+                        dict[key][i] = value
+                    else:
+                        dict[key][i] = np.NaN
+
+                else:
+                    if value is not None:
+                        dict[key].append(value)
+                    else:
+                        dict[key].append('')
+
+        
 
     def export_image_data_for_Scripps(self, size, filename, project):
         label_map = self.create_label_map(size, labels_dictionary=project.labels, working_area=project.working_area)

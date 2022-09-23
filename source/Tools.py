@@ -44,11 +44,11 @@ class Tools(object):
         # TOOLS - create all the tools
         self.tools = {
             "CREATECRACK": CreateCrack(self.viewerplus),
+            "FREEHAND": Freehand(self.viewerplus, self.edit_points),
+            "EDITBORDER": EditBorder(self.viewerplus, self.edit_points),
             "SPLITBLOB": SplitBlob(self.viewerplus, self.pick_points),
             "ASSIGN": Assign(self.viewerplus),
-            "EDITBORDER": EditBorder(self.viewerplus, self.edit_points),
             "CUT": Cut(self.viewerplus, self.edit_points),
-            "FREEHAND": Freehand(self.viewerplus, self.edit_points),
             "WATERSHED": Watershed(self.viewerplus, self.scribbles),
             "BRICKS": BricksSegmentation(self.viewerplus),
             "RULER": Ruler(self.viewerplus, self.pick_points),

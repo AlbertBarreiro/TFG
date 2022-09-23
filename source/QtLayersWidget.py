@@ -93,6 +93,7 @@ class QtLayersWidget(QTreeWidget):
                 item.addChild(child)
                 # ui->treeWidget->setItemWidget(items.value(1),0,new QPushButton("Click Me")); // Solution for your problem
 
+            item.setExpanded(True)
             #items.append(item)
             self.addTopLevelItem(item);
 
@@ -124,14 +125,15 @@ class QtLayersWidget(QTreeWidget):
                     if item.checkState(0) != Qt.Checked:
                         item.setIcon(0, self.icon_eyeopen)
                         item.setCheckState(0, Qt.Checked)
-                        if len(item.image.layers):
-                            item.setExpanded(True)
+                        #if len(item.image.layers):
+                        #    item.setExpanded(True)
+                        item.setExpanded(True)
                     else:
-                        imgWasChecked = True
+                        imgWasChecked = True 
                 else:
                     item.setIcon(0, self.icon_eyeclosed)
                     item.setCheckState(0, Qt.Unchecked)
-                    item.setExpanded(False)
+                    item.setExpanded(True)
 
                 if image2 == None:
                     item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)

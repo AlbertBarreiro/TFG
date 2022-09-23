@@ -42,13 +42,15 @@ class QtMapSettingsWidget(QWidget):
 
 
         TEXT_SPACE = 100
+        
+        self.DEFAULT_MAP_NAME = "map name"
 
         self.fields = {
-            "name"            : {"name": "Map Name *"           , "value": "", "place": "Name of the map"        , "width": 300, "action": None                 , "buttonText": ""},
             "rgb_filename"    : {"name": "RGB Image *"          , "value": "", "place": "Path of the rgb image"  , "width": 300, "action": self.chooseMapFile   , "buttonText": "..." },
             "depth_filename"  : {"name": "Depth Image"         , "value": "", "place": "Path of the depth image", "width": 300, "action": self.chooseDEMFile   , "buttonText": "..."},
             "acquisition_date": {"name": "Acquisition Date *"   , "value": "", "place": "YYYY-MM-DD"             , "width": 150, "action": None                 , "buttonText": ""},
-            "px_to_mm"        : {"name": "Pixel size (mm)"     , "value": "", "place": ""                , "width": 150, "action": None                        , "buttonText": "" }
+            "px_to_mm"        : {"name": "Pixel size (mm)"     , "value": "", "place": ""                , "width": 150, "action": None                        , "buttonText": "" },
+            "name"            : {"name": "Map Name *"           , "value": self.DEFAULT_MAP_NAME, "place": "Name of the map"        , "width": 300, "action": None                 , "buttonText": ""}
         }
         self.data = {}
 
@@ -59,6 +61,7 @@ class QtMapSettingsWidget(QWidget):
             label.setFixedWidth(TEXT_SPACE)
             label.setAlignment(Qt.AlignRight)
             label.setMinimumWidth(150)
+            field["label"] = label
 
             edit = QLineEdit(field["value"])
             edit.setStyleSheet("background-color: rgb(55,55,55); border: 1px solid rgb(90,90,90)")
@@ -82,6 +85,11 @@ class QtMapSettingsWidget(QWidget):
                 layout.addWidget(button)
             layout.addStretch()
             layoutV.addLayout(layout)
+
+        # hide this field for CH
+        self.fields["px_to_mm"]["label"].hide()
+        self.fields["px_to_mm"]["edit"].hide()
+        
 
         boxlayout = QVBoxLayout()
         label = QLabel("    Please be sure to complete the items marked with an asterisk (*)")
@@ -123,9 +131,14 @@ class QtMapSettingsWidget(QWidget):
     def chooseMapFile(self):
 
         filters = "Image (*.png *.jpg *.jpeg *.tif *.tiff)"
-        fileName, _ = QFileDialog.getOpenFileName(self, "Input Map File", "", filters)
+        fileName, _ = QFileDialog.getOpenFileName(self, "Input Map File", "./", filters)
         if fileName:
             self.fields["rgb_filename"]["edit"].setText(fileName)
+            
+            if self.fields["name"]["edit"].text() == self.DEFAULT_MAP_NAME or True: # always update
+                name = os.path.splitext(os.path.basename(fileName))[0]
+                self.fields["name"]["edit"].setText("Map "+name)
+            
 
             creation_time = time.ctime(os.path.getmtime(fileName))
             if creation_time is not None:
@@ -193,3 +206,4 @@ class QtMapSettingsWidget(QWidget):
         self.accepted.emit()
         self.close()
 
+        self.parent().createColorAnnotationLayer()

@@ -14,8 +14,9 @@ class QtPanelInfo(QTabWidget):
         self.attributes = []
         #self.setMaximumHeight(200)
 
-        self.addTab(self.regionInfo(), "Properties")
         self.addTab(self.customInfo(), "Attributes")
+        self.addTab(self.regionInfo(), "Properties")
+        
 
         self.setAutoFillBackground(True)
 
