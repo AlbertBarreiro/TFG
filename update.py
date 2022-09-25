@@ -18,7 +18,7 @@ to_replace_directories = ['coraline', 'docs', 'fonts', 'icons', 'source', '.gith
 
 osused = platform.system()
 
-github_repo = 'cnr-isti-vclab/TagLab/'
+github_repo = 'AlbertBarreiro/TFG/'
 base_repo = 'https://github.com/' + github_repo
 raw_link = 'https://raw.githubusercontent.com/' + github_repo + 'main/TAGLAB_VERSION'
 
@@ -81,7 +81,7 @@ if need_to_update:
         zip_ref.extractall('.')
 
     #move all the content of the extracted zip file in the TagLab folder
-    source_dir = './TagLab-' + taglab_online_version
+    source_dir = './TFG-' + taglab_online_version
     target_dir = '.'
 
     file_names = os.listdir(source_dir)
@@ -114,8 +114,9 @@ if need_to_update:
             raise Exception('Cmake not found. Coraline library cannot be compiled. Please install cmake '
                             'first.\nInstallation aborted.')
 else:
-    print('No need to update: TagLab is already up to date.')
+    print('No need to update: MuralTagLab is already up to date.')
 
+"""
 # check for other networks
 print('Downloading networks...')
 base_url = 'http://taglab.isti.cnr.it/models/'
@@ -140,3 +141,4 @@ for net_name in net_file_names:
             raise Exception("Cannot download " + net_name + ".")
     else:
         print(net_name + ' already exists.')
+"""

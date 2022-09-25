@@ -24,7 +24,8 @@ from PyQt5.QtGui import QPainter, QImage, QPixmap, QIcon, qRgb, qRed, qGreen, qB
 from PyQt5.QtWidgets import QSlider,QGroupBox, QCheckBox,  QWidget, QDialog, QFileDialog, QComboBox, QSizePolicy, QLineEdit, QLabel, QPushButton, QHBoxLayout, QVBoxLayout
 from source.Annotation import Annotation
 import numpy as np
-
+import cv2
+from functools import reduce
 from source import utils
 
 class QtClassifierWidget(QWidget):
@@ -37,7 +38,6 @@ class QtClassifierWidget(QWidget):
         self.classifiers = classifiers
 
         self.setStyleSheet("background-color: rgba(60,60,65,100); color: white")
-
 
         layoutH0 = QHBoxLayout()
 
@@ -112,6 +112,7 @@ class QtClassifierWidget(QWidget):
         self.btnChooseArea.setIcon(ChooseAreaIcon)
         self.chkAutocolor = QCheckBox("Auto color")
         self.chkAutolevel = QCheckBox("Auto contrast")
+        self.chkDecorrelation = QCheckBox("Decorrelation stretching")
         self.btnPrev = QPushButton("Preview")
 
 
@@ -160,6 +161,8 @@ class QtClassifierWidget(QWidget):
         self.chkAutocolor.stateChanged.connect(self.useAutocolor)
         layoutButtons.addWidget(self.chkAutolevel)
         self.chkAutolevel.stateChanged.connect(self.useAutoLevel)
+        layoutButtons.addWidget(self.chkDecorrelation)
+        self.chkDecorrelation.stateChanged.connect(self.useDecorrelation)
         layoutButtons.addWidget(self.btnPrev)
         layoutButtons.addStretch()
         layoutButtons.addLayout(layoutSliderTransparency)
@@ -214,6 +217,8 @@ class QtClassifierWidget(QWidget):
 
         self.rgb_image = None
         self.labelimage = None
+        self.decorr_qimage = None
+        self.cached_decor = False
 
         self.preview_area = [0, 0, 0, 0]
 
@@ -221,10 +226,16 @@ class QtClassifierWidget(QWidget):
 
         if self.rgb_image is not None:
 
-            if not self.chkAutocolor.isChecked() and not self.chkAutolevel.isChecked():
-                self.setRGBPreview(self.rgb_image)
+            if not self.chkAutocolor.isChecked() and not self.chkAutolevel.isChecked() and not self.chkDecorrelation.isChecked():
+                self.setRGBPreview(self.rgb_image, False)
+                self.chkAutocolor.setEnabled(True)
+                self.chkAutolevel.setEnabled(True)
+                self.chkDecorrelation.setEnabled(True)
+                self.chkAutocolor.setStyleSheet("color: white")
+                self.chkAutolevel.setStyleSheet("color: white")
+                self.chkDecorrelation.setStyleSheet("color: white")
 
-            elif self.chkAutocolor.isChecked() and not self.chkAutolevel.isChecked():
+            elif self.chkAutocolor.isChecked() and not self.chkAutolevel.isChecked() and not self.chkDecorrelation.isChecked():
                 color_rgb = self.rgb_image.convertToFormat(QImage.Format_RGB32)
                 color_rgb = utils.qimageToNumpyArray(color_rgb)
                 color_rgb = utils.whiteblance(color_rgb)
@@ -233,7 +244,10 @@ class QtClassifierWidget(QWidget):
                 size = self.LABEL_SIZE
                 self.QlabelRGB.setPixmap(self.QPixmapRGB.scaled(QSize(size, size), Qt.KeepAspectRatio))
 
-            elif not self.chkAutocolor.isChecked() and self.chkAutolevel.isChecked():
+                self.chkDecorrelation.setEnabled(False)
+                self.chkDecorrelation.setStyleSheet("color: grey")
+
+            elif not self.chkAutocolor.isChecked() and self.chkAutolevel.isChecked() and not self.chkDecorrelation.isChecked():
                 color_rgb = self.rgb_image.convertToFormat(QImage.Format_RGB32)
                 color_rgb = utils.qimageToNumpyArray(color_rgb)
                 color_rgb = utils.autolevel(color_rgb, 1.0)
@@ -242,7 +256,10 @@ class QtClassifierWidget(QWidget):
                 size = self.LABEL_SIZE
                 self.QlabelRGB.setPixmap(self.QPixmapRGB.scaled(QSize(size, size), Qt.KeepAspectRatio))
 
-            elif self.chkAutocolor.isChecked() and self.chkAutolevel.isChecked():
+                self.chkDecorrelation.setEnabled(False)
+                self.chkDecorrelation.setStyleSheet("color: grey")
+
+            elif self.chkAutocolor.isChecked() and self.chkAutolevel.isChecked() and not self.chkDecorrelation.isChecked():
 
                 #always apply first auto color then autolevel
                 color_rgb = self.rgb_image.convertToFormat(QImage.Format_RGB32)
@@ -256,7 +273,64 @@ class QtClassifierWidget(QWidget):
                 size = self.LABEL_SIZE
                 self.QlabelRGB.setPixmap(self.QPixmapRGB.scaled(QSize(size, size), Qt.KeepAspectRatio))
 
+                self.chkDecorrelation.setEnabled(False)
+                self.chkDecorrelation.setStyleSheet("color: grey")
+            
+            elif not self.chkAutocolor.isChecked() and not self.chkAutolevel.isChecked() and self.chkDecorrelation.isChecked():
+                if not self.cached_decor:
+                    self.cached_decor = True
+                    color_rgb = self.rgb_image.convertToFormat(QImage.Format_RGB32)
+                    color_rgb = utils.qimageToNumpyArray(color_rgb)
+                    self.decorr_qimage = self.decorrstretch(color_rgb)
+                self.QPixmapRGB = QPixmap.fromImage(self.decorr_qimage)
+                size = self.LABEL_SIZE
+                self.QlabelRGB.setPixmap(self.QPixmapRGB.scaled(QSize(size, size), Qt.KeepAspectRatio))
 
+                self.chkAutocolor.setEnabled(False)
+                self.chkAutocolor.setStyleSheet("color: grey")
+                self.chkAutolevel.setEnabled(False)
+                self.chkAutolevel.setStyleSheet("color: grey")
+
+
+    def decorrstretch(self, A):
+        """
+        Apply decorrelation stretch to image
+        """
+        # save the original shape
+        orig_shape = A.shape
+
+        A = A.reshape((-1,3)).astype(float)
+        # covariance matrix of A
+        cov = np.cov(A.T)
+        # source and target sigma
+        sigma = np.diag(np.sqrt(cov.diagonal()))
+        # eigen decomposition of covariance matrix
+        eigval, V = np.linalg.eig(cov)
+        # stretch matrix
+        S = np.diag(1/np.sqrt(eigval))
+        # compute mean of each color
+        mean = np.mean(A, axis=0)
+        # substract the mean from image
+        A -= mean
+        # compute the transformation matrix
+        T = reduce(np.dot, [sigma, V, S, V.T])
+        # compute offset 
+        offset = mean - np.dot(mean, T)
+        # transform the image
+        A = np.dot(A, T)
+        # add the mean and offset
+        A += mean + offset
+        # restore original shape
+        B_array = A.reshape(orig_shape)
+
+        # ...rescale the color values
+        B_array[:,:,0] = 255 * (B_array[:,:,0] - B_array[:,:,0].min())/(B_array[:,:,0].max() - B_array[:,:,0].min())
+        B_array[:,:,1] = 255 * (B_array[:,:,1] - B_array[:,:,1].min())/(B_array[:,:,1].max() - B_array[:,:,1].min())
+        B_array[:,:,2] = 255 * (B_array[:,:,2] - B_array[:,:,2].min())/(B_array[:,:,2].max() - B_array[:,:,2].min())
+
+        # return it as uint8 (byte) image
+        return utils.rgbToQImage(B_array.astype(np.uint8))
+    
     @pyqtSlot(int, int, int, int)
     def updatePreviewArea(self, x, y, width, height):
 
@@ -281,14 +355,21 @@ class QtClassifierWidget(QWidget):
     @pyqtSlot(int)
     def useAutoLevel(self):
         self.colorPreview()
+    
+    @pyqtSlot(int)
+    def useDecorrelation(self):
+        self.colorPreview()
 
 
-    def setRGBPreview(self, image):
+    def setRGBPreview(self, image, new_photo = True):
 
         self.QPixmapRGB = QPixmap.fromImage(image)
         self.rgb_image = image.convertToFormat(QImage.Format_ARGB32_Premultiplied)
         size = self.LABEL_SIZE
         self.QlabelRGB.setPixmap(self.QPixmapRGB.scaled(QSize(size, size), Qt.KeepAspectRatio))
+
+        if new_photo:
+            self.cached_decor = False
 
     def setLabelPreview(self, image):
 

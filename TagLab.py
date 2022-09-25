@@ -135,10 +135,10 @@ class TagLab(QMainWindow):
 
         self.setStyleSheet("background-color: rgb(75,55,55); color: white")
 
-        current_version, _ = self.checkNewVersion()
-        #if need_to_update:
-        #    print("New version available. Please, launch update.py")
-        #   sys.exit(0)
+        current_version, need_to_update = self.checkNewVersion()
+        if need_to_update:
+            print("New version available. Please, launch update.py")
+            sys.exit(0)
 
         ##### DATA INITIALIZATION AND SETUP #####
 
@@ -661,7 +661,7 @@ class TagLab(QMainWindow):
 
     def checkNewVersion(self):
 
-        github_repo = 'cnr-isti-vclab/TagLab/'
+        github_repo = 'AlbertBarreiro/TFG/'
         base_repo = 'https://github.com/' + github_repo
         raw_link = 'https://raw.githubusercontent.com/' + github_repo + 'main/TAGLAB_VERSION'
 
@@ -915,7 +915,6 @@ class TagLab(QMainWindow):
         newMapAct.triggered.connect(self.setMapToLoad)
 
         projectEditorAct = QAction("Edit Map Data...", self)
-        projectEditorAct.setShortcut('Ctrl+L')
         projectEditorAct.setStatusTip("Open project editor dialog")
         projectEditorAct.triggered.connect(self.openProjectEditor)
 
@@ -925,9 +924,11 @@ class TagLab(QMainWindow):
         createDicAct.triggered.connect(self.createDictionary)
 
         createDcyAnnotation = QAction("Add Decay Annotation Layer", self)
+        createDcyAnnotation.setShortcut('Ctrl+D')
         createDcyAnnotation.triggered.connect(self.createDecayAnnotationLayer)
 
         createColorAnnotation = QAction("Add Color Annotation Layer", self)
+        createColorAnnotation.setShortcut('Ctrl+C')
         createColorAnnotation.triggered.connect(self.createColorAnnotationLayer)
 
         regionAttributesAct = QAction("Region Attributes...", self)
@@ -952,9 +953,9 @@ class TagLab(QMainWindow):
         ### EXPORT
 
 
-        exportW3CAct = QAction("Export W3C annotation model (JSON)", self)
-        exportW3CAct.setStatusTip("Export W3C annotation model (JSON)")
-        exportW3CAct.triggered.connect(self.exportAnnAsW3C)
+        #exportW3CAct = QAction("Export W3C annotation model (JSON)", self)
+        #exportW3CAct.setStatusTip("Export W3C annotation model (JSON)")
+        #exportW3CAct.triggered.connect(self.exportAnnAsW3C)
 
         exportDataTableAct = QAction("Export Annotations As Data Table", self)
         #exportDataTableAct.setShortcut('Ctrl+??')
@@ -1052,7 +1053,7 @@ class TagLab(QMainWindow):
         self.submenuImport.addAction(appendAct)
         self.filemenu.addSeparator()
         self.submenuExport = self.filemenu.addMenu("Export")
-        self.submenuExport.addAction(exportW3CAct)
+        #self.submenuExport.addAction(exportW3CAct)
         self.submenuExport.addAction(exportDataTableAct)
         self.submenuExport.addAction(exportMapAct)
         #self.submenuExport.addAction(exportShapefilesAct)
@@ -3067,7 +3068,6 @@ class TagLab(QMainWindow):
         logfile.info("[PROJECT] A new project has been setup.")
         self.groupbox_blobpanel.region_attributes = self.project.region_attributes
 
-        # added 
         self.setMapToLoad()
         
         
@@ -4048,7 +4048,7 @@ class TagLab(QMainWindow):
             return
 
     @pyqtSlot()
-    def exportAnnAsW3C(self):  # added
+    def exportAnnAsW3C(self):
 
         if self.activeviewer.image is None:
             box = QMessageBox()
