@@ -2531,7 +2531,7 @@ class TagLab(QMainWindow):
         """
         if len(self.project.images) < 2:
             box = QMessageBox()
-            box.setText("This project has only a single map.")
+            box.setText("This project has only a single map")
             box.exec()
             self.move()
             return

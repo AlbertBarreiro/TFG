@@ -338,6 +338,9 @@ class Ritm(Tool):
                 self.viewerplus.removeBlob(self.blob_to_correct)
                 blob.id = self.blob_to_correct.id
                 blob.class_name = self.blob_to_correct.class_name
+                blob.note = self.blob_to_correct.note
+                blob.data = self.blob_to_correct.data
+                blob.confidence = self.blob_to_correct.confidence
                 message = "[TOOL][RITM][BLOB-EDITED]"
 
             #order is important: first add then setblob class!

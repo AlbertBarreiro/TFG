@@ -33,9 +33,16 @@ class QtPanelInfo(QTabWidget):
         
     def updateRegionAttributes(self, region_attributes):
         self.clear()
+        
+        self.removeTab(0)
+        self.removeTab(0)
+        
         self.region_attributes = region_attributes
-        self.removeTab(1)
+        self.fields = {}
+        self.attributes = []
+        
         self.addTab(self.customInfo(), "Attributes")
+        self.addTab(self.regionInfo(), "Properties")
 
     def regionInfo(self):
 
@@ -44,7 +51,6 @@ class QtPanelInfo(QTabWidget):
         fields = { 'id': 'Id:', 'class_name': 'Class:', 'genet': 'Genet:', 
             'perimeter': 'Perimeter:', 'area': 'Area:', 'surface_area': 'Surf. area:' }
 
-        self.fields = {}
         row = 0
         col = 0
         for field in fields:
